@@ -14,7 +14,7 @@ python3 -m venv .build/venv
 ## Local checks
 
 ```sh
-.build/venv/bin/clang-format --dry-run --Werror tools/*.m tools/*.h tests/*.m Sources/Session/*.[hm] Sources/Statistics/*.[hm] Sources/Presentation/*.[hm] Sources/Diagnostics/*.[hm] Sources/Compatibility/*.h rootreader/*.[hm] producerprobe/*.[hm]
+.build/venv/bin/clang-format --dry-run --Werror tools/*.m tools/*.h tests/*.m Sources/Session/*.[hm] Sources/Statistics/*.[hm] Sources/Presentation/*.[hm] Sources/Diagnostics/*.[hm] Sources/Compatibility/*.[hm] rootreader/*.[hm] producerprobe/*.[hm]
 sh tools/test.sh
 sh tools/build-probe.sh
 THEOS="$HOME/theos" make -C producerprobe package FINALPACKAGE=1

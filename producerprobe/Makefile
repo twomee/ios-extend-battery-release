@@ -3,7 +3,7 @@ export TARGET = iphone:clang::17.0
 export THEOS_PACKAGE_SCHEME = rootless
 include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = IEBProducerProbe IEBBatterySettings
-IEBProducerProbe_FILES = Tweak.x IEBActivityCapture.m IEBNativeCapture.m ../Sources/Statistics/IEBNativeJournal.m ../Sources/Statistics/IEBCycleSummary.m ../Sources/Session/IEBNativePowerWindow.m ../tools/IEBProducerEvidence.m ../Sources/Statistics/IEBActivityEvidence.m ../Sources/Session/IEBSessionState.m ../Sources/Session/IEBSessionStore.m ../Sources/Session/IEBPowerObserver.m
+IEBProducerProbe_FILES = ../Sources/Compatibility/IEBCollectorBootstrap.m Tweak.x IEBActivityCapture.m IEBNativeCapture.m ../Sources/Statistics/IEBNativeJournal.m ../Sources/Statistics/IEBCycleSummary.m ../Sources/Session/IEBNativePowerWindow.m ../tools/IEBProducerEvidence.m ../Sources/Statistics/IEBActivityEvidence.m ../Sources/Session/IEBSessionState.m ../Sources/Session/IEBSessionStore.m ../Sources/Session/IEBPowerObserver.m
 IEBProducerProbe_CFLAGS = -fobjc-arc -Wall -Wextra -Werror
 IEBProducerProbe_FRAMEWORKS = Foundation
 IEBProducerProbe_LIBRARIES = sqlite3
