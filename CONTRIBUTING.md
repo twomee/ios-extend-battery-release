@@ -4,7 +4,7 @@ Open an issue, create a branch from the current development revision, and submit
 
 ## Setup
 
-Use macOS with Xcode, Python 3 and Theos. No cloud credentials are required to build or test.
+Use macOS with Xcode, Python 3.11+ and Theos (CI uses Python 3.14). No cloud credentials are required to build or test.
 
 ```sh
 python3 -m venv .build/venv
