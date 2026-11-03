@@ -9,7 +9,7 @@ static BOOL ABI(Class cls, NSString *selector, BOOL classMethod, const char *enc
     return m && strcmp(method_getTypeEncoding(m), encoding) == 0;
 }
 static id Get(id target, NSString *selector) {
-    return ((id(*)(id, SEL))objc_msgSend)(target, NSSelectorFromString(selector));
+    return ((id (*)(id, SEL))objc_msgSend)(target, NSSelectorFromString(selector));
 }
 NSDictionary *IEBLoadApplicationCatalog(NSArray<NSString *> *identities) {
     static NSDictionary *installed;
@@ -40,7 +40,7 @@ NSDictionary *IEBLoadApplicationCatalog(NSArray<NSString *> *identities) {
                             id identity = Get(app, @"bundleIdentifier"), url = Get(app, @"bundleURL"),
                                name = Get(app, @"localizedName");
                             BOOL present =
-                                ((BOOL(*)(id, SEL))objc_msgSend)(app, NSSelectorFromString(@"isInstalled"));
+                                ((BOOL (*)(id, SEL))objc_msgSend)(app, NSSelectorFromString(@"isInstalled"));
                             if (present && [identity isKindOfClass:NSString.class] && [identity length] > 0 &&
                                 [url isKindOfClass:NSURL.class] && [[url pathExtension] isEqual:@"app"]) {
                                 NSError *infoError = nil;
@@ -102,7 +102,7 @@ NSDictionary *IEBLoadApplicationCatalog(NSArray<NSString *> *identities) {
             UIImage *icon = [icons objectForKey:identity];
             if (!icon && iconSupported)
                 @try {
-                    UIImage *source = ((id(*)(id, SEL, id, int, double))objc_msgSend)(
+                    UIImage *source = ((id (*)(id, SEL, id, int, double))objc_msgSend)(
                         UIImage.class,
                         NSSelectorFromString(@"_applicationIconImageForBundleIdentifier:format:scale:"),
                         identity, 0, 2.0);

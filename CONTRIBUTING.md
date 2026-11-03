@@ -32,7 +32,7 @@ done
 
 The UIKit preview uses fixtures; it does not certify private battery APIs on a device. The package build also verifies root ownership and embedded license files. The root-level Makefile builds a historical prototype; use `producerprobe` for the current tweak.
 
-Install the optional local hooks with `pre-commit install` after installing pre-commit and Gitleaks. CI configuration covers formatting, tests, coverage, builds and security scans. Cloud checks may be skipped when the owner's Actions quota is exhausted; report local results honestly and leave the PR unmerged until the required checks can run.
+Install the optional local hooks with `pre-commit install` after installing pre-commit and Gitleaks. Formatting and secret checks run before commits; the full suite runs before pushes. Run `.build/venv/bin/pip-audit -r requirements-dev.txt` to audit development dependencies locally. CI configuration covers formatting, tests, coverage, builds and security scans. Cloud checks may be skipped when the owner's Actions quota is exhausted; report local results honestly and leave the PR unmerged until the required checks can run.
 
 ## Design and review
 

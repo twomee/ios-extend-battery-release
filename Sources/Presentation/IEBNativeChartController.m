@@ -206,7 +206,7 @@ NSDictionary *IEBNativeChartPresentationForTable(UITableView *table) {
         self.view.backgroundColor = self.presentation[@"background"];
     }
     id identifier =
-        ((id(*)(id, SEL))objc_msgSend)(NativeClass(), NSSelectorFromString(@"chartIdentifier24Hrs"));
+        ((id (*)(id, SEL))objc_msgSend)(NativeClass(), NSSelectorFromString(@"chartIdentifier24Hrs"));
     Send(self.chart, @"setActiveChart:", identifier);
     NSNumber *selected = nil;
     if (valid && start > 0 && end > start)
