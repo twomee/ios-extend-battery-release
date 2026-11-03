@@ -314,7 +314,7 @@ BOOL IEBSelectNativeRange(UIViewController *owner, UISegmentedControl *control, 
     // Restore the original view so the user can select a live native range there.
     IEBDismissSettingsPanel(owner);
     UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
-                                    IEBText(@"Native battery view restored. Select the range again.",
-                                            @"תצוגת הסוללה המקורית שוחזרה. בחר שוב את הטווח."));
+                                    IEBLocalized(@"NATIVE_BATTERY_VIEW_RESTORED_SELECT_THE_RANGE_AGAIN",
+                                                 @"Native battery view restored. Select the range again."));
     return NO;
 }

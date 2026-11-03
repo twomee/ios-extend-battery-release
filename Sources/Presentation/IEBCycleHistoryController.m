@@ -28,13 +28,13 @@ static NSString *Time(id n, BOOL delta) {
 - (instancetype)initWithFirst:(NSDictionary *)a second:(NSDictionary *)b {
     self = [super initWithStyle:UITableViewStyleInsetGrouped];
     if (self) {
-        self.title = IEBText(@"Cycle Comparison", @"השוואת מחזורים");
+        self.title = IEBLocalized(@"CYCLE_COMPARISON", @"Cycle Comparison");
         NSDictionary *difference = IEBCompareCycleSummaries(a, b);
         NSMutableArray *metrics = [NSMutableArray new];
         NSArray *specs = @[
-            @[ IEBText(@"Duration", @"משך המחזור"), @"duration", @"duration_delta" ],
-            @[ IEBText(@"Screen On", @"מסך פעיל"), @"screen_on", @"screen_on_delta" ],
-            @[ IEBText(@"Screen Off Usage", @"שימוש כשהמסך כבוי"), @"screen_off", @"screen_off_delta" ]
+            @[ IEBLocalized(@"DURATION", @"Duration"), @"duration", @"duration_delta" ],
+            @[ IEBLocalized(@"SCREEN_ON", @"Screen On"), @"screen_on", @"screen_on_delta" ],
+            @[ IEBLocalized(@"SCREEN_OFF_USAGE", @"Screen Off Usage"), @"screen_off", @"screen_off_delta" ]
         ];
         for (NSUInteger i = 0; i < specs.count; i++) {
             NSArray *spec = specs[i];
@@ -47,81 +47,82 @@ static NSString *Time(id n, BOOL delta) {
                                          : NSNull.null;
             NSString *delta = Time(displayedDifference, YES);
             [metrics addObject:@[
-                spec[0], [NSString stringWithFormat:IEBText(@"A: %@ · B: %@\nDifference (A − B): %@",
-                                                            @"א: %@ · ב: %@\nהפרש (א פחות ב): %@"),
+                spec[0], [NSString stringWithFormat:IEBLocalized(@"A_B_DIFFERENCE_A_B",
+                                                                 @"A: %@ · B: %@\nDifference (A − B): %@"),
                                                     first, second, delta]
             ]];
         }
         id relative = difference[@"energy_rate_relative_percent"];
-        NSString *rateText = IEBText(@"— · A relative rate cannot be calculated from the available data.",
-                                     @"— · אין די נתונים לחישוב קצב יחסי.");
+        NSString *rateText =
+            IEBLocalized(@"A_RELATIVE_RATE_CANNOT_BE_CALCULATED_FROM_THE_AVAILABLE_DATA",
+                         @"— · A relative rate cannot be calculated from the available data.");
         BOOL shortCycle = (Number(a[@"duration"]) && [a[@"duration"] doubleValue] < 60) ||
                           (Number(b[@"duration"]) && [b[@"duration"] doubleValue] < 60);
         if (Number(relative)) {
             double percent = DisplayedValue(relative, YES);
             NSString *amount = NumericRun([NSString stringWithFormat:@"%.1f%%", fabs(percent)]);
-            rateText = percent > 0
-                           ? [NSString stringWithFormat:IEBText(@"A's estimated rate is %@ higher than B's.",
-                                                                @"קצב הצריכה המשוער בא׳ גבוה ב־%@ מב׳."),
-                                                        amount]
-                       : percent < 0
-                           ? [NSString stringWithFormat:IEBText(@"A's estimated rate is %@ lower than B's.",
-                                                                @"קצב הצריכה המשוער בא׳ נמוך ב־%@ מב׳."),
-                                                        amount]
-                           : IEBText(@"A and B have similar estimated rates at the displayed precision.",
-                                     @"קצב הצריכה המשוער בא׳ ובב׳ דומה ברמת הדיוק המוצגת.");
+            rateText =
+                percent > 0
+                    ? [NSString stringWithFormat:IEBLocalized(@"A_S_ESTIMATED_RATE_IS_HIGHER_THAN_B_S",
+                                                              @"A's estimated rate is %@ higher than B's."),
+                                                 amount]
+                : percent < 0
+                    ? [NSString stringWithFormat:IEBLocalized(@"A_S_ESTIMATED_RATE_IS_LOWER_THAN_B_S",
+                                                              @"A's estimated rate is %@ lower than B's."),
+                                                 amount]
+                    : IEBLocalized(@"A_AND_B_HAVE_SIMILAR_ESTIMATED_RATES_AT_THE_DISPLAYED_PRECISION",
+                                   @"A and B have similar estimated rates at the displayed precision.");
         } else if (shortCycle) {
-            rateText = IEBText(@"— · A cycle is shorter than one minute; there is not enough data for a "
-                               @"useful rate comparison.",
-                               @"— · אחד המחזורים קצר מדקה; אין די נתונים להשוואת קצב שימושית.");
+            rateText =
+                IEBLocalized(@"A_CYCLE_IS_SHORTER_THAN_ONE_MINUTE_THERE_IS_NOT_ENOUGH_DATA_FOR_A_USEFUL_RA",
+                             @"— · A cycle is shorter than one minute; there is not enough data for a useful "
+                             @"rate comparison.");
         } else if ([difference[@"comparable_energy"] boolValue] && [b[@"energy_per_hour"] doubleValue] == 0) {
-            rateText = IEBText(@"— · B has no positive estimated rate to use as a comparison baseline.",
-                               @"— · אין בב׳ קצב צריכה חיובי שיכול לשמש בסיס להשוואה.");
+            rateText = IEBLocalized(@"B_HAS_NO_POSITIVE_ESTIMATED_RATE_TO_USE_AS_A_COMPARISON_BASELINE",
+                                    @"— · B has no positive estimated rate to use as a comparison baseline.");
         }
-        NSString *caution = IEBText(@"This is a relative estimate, not battery percentage lost.",
-                                    @"זהו שינוי יחסי באומדן, ולא אחוזי סוללה שהמכשיר איבד.");
+        NSString *caution = IEBLocalized(@"THIS_IS_A_RELATIVE_ESTIMATE_NOT_BATTERY_PERCENTAGE_LOST",
+                                         @"This is a relative estimate, not battery percentage lost.");
         if ([a[@"energy_allocation_estimated"] boolValue] || [b[@"energy_allocation_estimated"] boolValue])
             caution = [caution
                 stringByAppendingString:
-                    IEBText(@" Some energy records are allocated proportionally across cycle boundaries.",
-                            @" חלק מרשומות הצריכה חולקו באופן יחסי בגבולות המחזור.")];
+                    IEBLocalized(
+                        @"SOME_ENERGY_RECORDS_ARE_ALLOCATED_PROPORTIONALLY_ACROSS_CYCLE_BOUNDARIES",
+                        @" Some energy records are allocated proportionally across cycle boundaries.")];
         [metrics addObject:@[
-            IEBText(@"Relative consumption rate — estimate", @"קצב צריכה יחסי — אומדן"),
+            IEBLocalized(@"RELATIVE_CONSUMPTION_RATE_ESTIMATE", @"Relative consumption rate — estimate"),
             [NSString stringWithFormat:@"%@\n%@", rateText, caution]
         ]];
         _metrics = [metrics copy];
         NSMutableArray *notes = [NSMutableArray
             arrayWithObject:
-                IEBText(@"A is the first selected cycle; B is the second. Differences use the displayed "
-                        @"precision. Unknown values are not zero.",
-                        @"א הוא המחזור שנבחר ראשון; ב נבחר שני. ההפרשים מחושבים לפי הדיוק המוצג. "
-                        @"נתונים חסרים אינם אפס.")];
+                IEBLocalized(@"A_IS_THE_FIRST_SELECTED_CYCLE_B_IS_THE_SECOND_DIFFERENCES_USE_THE_DISPLAYED",
+                             @"A is the first selected cycle; B is the second. Differences use the displayed "
+                             @"precision. Unknown values are not zero.")];
         if ([a[@"duration"] doubleValue] != [b[@"duration"] doubleValue])
             [notes
-                addObject:
-                    IEBText(
-                        @"Durations differ. Screen-time totals are not directly equivalent; estimated energy "
-                        @"is normalized per hour.",
-                        @"המחזורים באורכים שונים. זמני המסך המצטברים אינם שקולים; מדד הצריכה מנורמל לשעה.")];
+                addObject:IEBLocalized(
+                              @"DURATIONS_DIFFER_SCREEN_TIME_TOTALS_ARE_NOT_DIRECTLY_EQUIVALENT_ESTIMATED_E",
+                              @"Durations differ. Screen-time totals are not directly equivalent; estimated "
+                              @"energy is normalized per hour.")];
         if (![a[@"power_complete"] boolValue] || ![b[@"power_complete"] boolValue] ||
             [a[@"activity_pending_seconds"] doubleValue] > 1 ||
             [b[@"activity_pending_seconds"] doubleValue] > 1)
             [notes
-                addObject:
-                    IEBText(@"At least one saved cycle contains gaps or delayed activity. Treat its totals "
-                            @"as partial.",
-                            @"לפחות אחד המחזורים כולל פערים או פעילות שממתינה לרישום. הסיכומים שלו חלקיים.")];
+                addObject:IEBLocalized(
+                              @"AT_LEAST_ONE_SAVED_CYCLE_CONTAINS_GAPS_OR_DELAYED_ACTIVITY_TREAT_ITS_TOTALS",
+                              @"At least one saved cycle contains gaps or delayed activity. Treat its totals "
+                              @"as partial.")];
         if (![difference[@"comparable_energy"] boolValue])
-            [notes
-                addObject:IEBText(
-                              @"Insufficient retained energy records for a supported consumption comparison.",
-                              @"אין די רשומות צריכה שמורות להשוואת צריכה מבוססת.")];
+            [notes addObject:
+                       IEBLocalized(
+                           @"INSUFFICIENT_RETAINED_ENERGY_RECORDS_FOR_A_SUPPORTED_CONSUMPTION_COMPARISON",
+                           @"Insufficient retained energy records for a supported consumption comparison.")];
         [notes addObject:
-                   IEBText(
-                       @"Relative consumption compares the estimated energy rate per hour in A with B. "
-                       @"It does not measure battery percentage lost or establish complete per-app coverage.",
-                       @"הקצב היחסי משווה את אומדן הצריכה לשעה בא׳ לב׳. הוא אינו מודד ירידה באחוזי "
-                       @"הסוללה ואינו מבטיח כיסוי מלא של כל אפליקציה.")];
+                   IEBLocalized(
+                       @"RELATIVE_CONSUMPTION_COMPARES_THE_ESTIMATED_ENERGY_RATE_PER_HOUR_IN_A_WITH_",
+                       @"Relative consumption compares the estimated energy rate per hour in A with B. It "
+                       @"does not measure battery percentage lost or establish complete per-app coverage.")];
         _explanation = [notes componentsJoinedByString:@"\n\n"];
     }
     return self;
@@ -173,7 +174,7 @@ static NSString *Time(id n, BOOL delta) {
         _detailLoader = [detailLoader copy];
         _selectedIDs = [NSMutableArray new];
         _queue = dispatch_queue_create("com.idonamaan.ieb.history", DISPATCH_QUEUE_SERIAL);
-        self.title = IEBText(@"Saved Cycles", @"מחזורים שמורים");
+        self.title = IEBLocalized(@"SAVED_CYCLES", @"Saved Cycles");
     }
     return self;
 }
@@ -186,7 +187,7 @@ static NSString *Time(id n, BOOL delta) {
                             action:@selector(reloadHistory)
                   forControlEvents:UIControlEventValueChanged];
     self.navigationItem.rightBarButtonItem =
-        [[UIBarButtonItem alloc] initWithTitle:IEBText(@"Clear", @"נקה בחירה")
+        [[UIBarButtonItem alloc] initWithTitle:IEBLocalized(@"CLEAR", @"Clear")
                                          style:UIBarButtonItemStylePlain
                                         target:self
                                         action:@selector(clearSelection)];
@@ -241,22 +242,19 @@ static NSString *Time(id n, BOOL delta) {
 - (NSString *)tableView:(UITableView *)table titleForHeaderInSection:(NSInteger)section {
     (void)table;
     (void)section;
-    return self.comparing ? IEBText(@"Preparing comparison…", @"מכין השוואה…")
-                          : IEBText(@"Select two closed cycles", @"בחר שני מחזורים סגורים להשוואה");
+    return self.comparing ? IEBLocalized(@"PREPARING_COMPARISON", @"Preparing comparison…")
+                          : IEBLocalized(@"SELECT_TWO_CLOSED_CYCLES", @"Select two closed cycles");
 }
 - (NSString *)tableView:(UITableView *)table titleForFooterInSection:(NSInteger)section {
     (void)table;
     (void)section;
-    return IEBText(
-        @"After installing this update, reload PerfPowerServices (for example, restart userspace with "
-        @"your jailbreak tool) to enable history collection. Reopening Settings alone is insufficient. "
-        @"Newest first · at most 20 cycles. Closed summaries are saved by the collector before old cycle "
-        @"data is cleared. Activity may arrive late. Only selected cycles query retained energy data; "
-        @"expired records remain unavailable.",
-        @"לאחר התקנת העדכון יש לטעון מחדש את PerfPowerServices (למשל באמצעות הפעלה מחדש של "
-        @"userspace בכלי הפריצה) כדי להפעיל שמירת היסטוריה. פתיחה מחדש של הגדרות בלבד אינה מספיקה. "
-        @"החדש ביותר ראשון · עד 20 מחזורים. שירות האיסוף שומר סיכום מחזור סגור לפני ניקוי נתוניו הישנים. "
-        @"פעילות עשויה להגיע באיחור. נתוני צריכה נשלפים רק למחזורים שנבחרו; רישומים שפגו נשארים לא זמינים.");
+    return IEBLocalized(
+        @"AFTER_INSTALLING_THIS_UPDATE_RELOAD_PERFPOWERSERVICES_FOR_EXAMPLE_RESTART_U",
+        @"After installing this update, reload PerfPowerServices (for example, restart userspace with your "
+        @"jailbreak tool) to enable history collection. Reopening Settings alone is insufficient. Newest "
+        @"first · at most 20 cycles. Closed summaries are saved by the collector before old cycle data is "
+        @"cleared. Activity may arrive late. Only selected cycles query retained energy data; expired "
+        @"records remain unavailable.");
 }
 - (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)path {
     (void)table;
@@ -266,25 +264,25 @@ static NSString *Time(id n, BOOL delta) {
     cell.detailTextLabel.numberOfLines = 0;
     if (!self.records.count) {
         cell.textLabel.text =
-            self.loading     ? IEBText(@"Loading saved cycles…", @"טוען מחזורים שמורים…")
-            : self.loadError ? IEBText(@"Could not read history. Pull to retry.",
-                                       @"לא ניתן לקרוא היסטוריה. משוך לניסיון נוסף.")
-                             : IEBText(@"No closed cycles saved yet.", @"עדיין אין מחזורים סגורים שמורים.");
+            self.loading     ? IEBLocalized(@"LOADING_SAVED_CYCLES", @"Loading saved cycles…")
+            : self.loadError ? IEBLocalized(@"COULD_NOT_READ_HISTORY_PULL_TO_RETRY",
+                                            @"Could not read history. Pull to retry.")
+                             : IEBLocalized(@"NO_CLOSED_CYCLES_SAVED_YET", @"No closed cycles saved yet.");
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         return cell;
     }
     NSDictionary *record = self.records[(NSUInteger)path.row];
     cell.textLabel.text =
-        [NSString stringWithFormat:IEBText(@"Cycle %ld · duration %@", @"מחזור %ld · משך %@"),
+        [NSString stringWithFormat:IEBLocalized(@"CYCLE_LD_DURATION", @"Cycle %ld · duration %@"),
                                    (long)path.row + 1, Time(record[@"duration"], NO)];
     cell.detailTextLabel.text =
-        [NSString stringWithFormat:IEBText(@"Screen on %@ · screen off %@\nActivity pending %@%@",
-                                           @"מסך פעיל %@ · שימוש כשהמסך כבוי %@\nממתין לרישום פעילות %@%@"),
+        [NSString stringWithFormat:IEBLocalized(@"SCREEN_ON_SCREEN_OFF_ACTIVITY_PENDING",
+                                                @"Screen on %@ · screen off %@\nActivity pending %@%@"),
                                    Time(record[@"screen_on"], NO), Time(record[@"screen_off"], NO),
                                    Time(record[@"activity_pending_seconds"], NO),
                                    [record[@"power_complete"] boolValue]
                                        ? @""
-                                       : IEBText(@" · incomplete cycle", @" · מחזור חלקי")];
+                                       : IEBLocalized(@"INCOMPLETE_CYCLE", @" · incomplete cycle")];
     cell.accessoryType = [self.selectedIDs containsObject:record[@"id"]] ? UITableViewCellAccessoryCheckmark
                                                                          : UITableViewCellAccessoryNone;
     return cell;

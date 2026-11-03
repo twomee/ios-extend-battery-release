@@ -1,12 +1,13 @@
 #import "IEBSourceCell.h"
+#import "../Localization/IEBLocalization.h"
 @implementation IEBSourceCell
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)identifier {
     (void)style;
     self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
     if (self) {
-        BOOL hebrew = [NSBundle.mainBundle.preferredLocalizations.firstObject hasPrefix:@"he"];
+        BOOL rtl = IEBLanguageIsRTL(IEBCurrentLanguage());
         self.contentView.semanticContentAttribute =
-            hebrew ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
+            rtl ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
         _nameLabel = [UILabel new];
         _nameLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
         _nameLabel.numberOfLines = 0;

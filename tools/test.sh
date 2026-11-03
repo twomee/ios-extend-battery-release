@@ -2,6 +2,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p .build
+python3 tools/build-localizations.py .build/IEBLocalizations.bundle
 xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror \
   -fprofile-instr-generate -fcoverage-mapping \
   tests/PlatformSupportTests.m -o .build/platform-support-tests
@@ -185,11 +186,11 @@ xcrun llvm-cov export .build/data-quality-tests -instr-profile=.build/data-quali
 python3 -c 'import json; p=json.load(open(".build/data-quality-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Data quality coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)'
 
 for diagnostic in ProcessReaderStatus DiagnosticReport; do
-  xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping "tests/${diagnostic}Tests.m" Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Diagnostics/IEBDiagnosticReport.m Sources/Statistics/IEBDataQuality.m -o ".build/${diagnostic}-tests"
+  xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping "tests/${diagnostic}Tests.m" Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Localization/IEBLocalization.m Sources/Diagnostics/IEBDiagnosticReport.m Sources/Statistics/IEBDataQuality.m -o ".build/${diagnostic}-tests"
   LLVM_PROFILE_FILE=".build/${diagnostic}.profraw" ".build/${diagnostic}-tests"
   xcrun llvm-profdata merge -sparse ".build/${diagnostic}.profraw" -o ".build/${diagnostic}.profdata"
   if [ "$diagnostic" = DiagnosticReport ]; then
-    xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping tests/ReadableDiagnosticTests.m Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Diagnostics/IEBDiagnosticReport.m Sources/Statistics/IEBDataQuality.m -o .build/readable-report-tests
+    xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping tests/ReadableDiagnosticTests.m Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Localization/IEBLocalization.m Sources/Diagnostics/IEBDiagnosticReport.m Sources/Statistics/IEBDataQuality.m -o .build/readable-report-tests
     LLVM_PROFILE_FILE=.build/readable-report.profraw .build/readable-report-tests
     xcrun llvm-profdata merge -sparse ".build/${diagnostic}.profraw" .build/readable-report.profraw -o ".build/${diagnostic}.profdata"
   fi
@@ -197,8 +198,9 @@ for diagnostic in ProcessReaderStatus DiagnosticReport; do
   python3 -c 'import json,sys; p=json.load(open(sys.argv[1]))["data"][0]["totals"]["lines"]["percent"]; print(f"{sys.argv[2]} coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)' ".build/${diagnostic}-coverage.json" "$diagnostic"
 done
 
-xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping tests/DiagnosticExportTests.m Sources/Diagnostics/IEBDiagnosticExport.m -o .build/diagnostic-export-tests
+xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping tests/DiagnosticExportTests.m Sources/Localization/IEBLocalization.m Sources/Diagnostics/IEBDiagnosticExport.m -o .build/diagnostic-export-tests
 LLVM_PROFILE_FILE=.build/diagnostic-export.profraw .build/diagnostic-export-tests
+LLVM_PROFILE_FILE=.build/diagnostic-export-fr.profraw .build/diagnostic-export-tests -AppleLanguages "(fr)"
 xcrun llvm-profdata merge -sparse .build/diagnostic-export.profraw -o .build/diagnostic-export.profdata
 xcrun llvm-cov export .build/diagnostic-export-tests -instr-profile=.build/diagnostic-export.profdata -summary-only Sources/Diagnostics/IEBDiagnosticExport.m > .build/diagnostic-export-coverage.json
 python3 -c 'import json; p=json.load(open(".build/diagnostic-export-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Diagnostic export coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)'
@@ -230,3 +232,11 @@ LLVM_PROFILE_FILE=.build/compatibility-evidence.profraw .build/compatibility-evi
 xcrun llvm-profdata merge -sparse .build/compatibility-evidence.profraw -o .build/compatibility-evidence.profdata
 xcrun llvm-cov export .build/compatibility-evidence-tests -instr-profile=.build/compatibility-evidence.profdata -summary-only tools/IEBCompatibilityEvidence.m > .build/compatibility-evidence-coverage.json
 python3 -c 'import json; p=json.load(open(".build/compatibility-evidence-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Compatibility evidence coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)'
+
+# Resolve real bundle resources independently of the Settings host process.
+xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror \
+  -fprofile-instr-generate -fcoverage-mapping tests/LocalizationTests.m Sources/Localization/IEBLocalization.m -o .build/localization-tests
+LLVM_PROFILE_FILE=.build/localization.profraw .build/localization-tests
+xcrun llvm-profdata merge -sparse .build/localization.profraw -o .build/localization.profdata
+xcrun llvm-cov export .build/localization-tests -instr-profile=.build/localization.profdata -summary-only Sources/Localization/IEBLocalization.m > .build/localization-coverage.json
+python3 -c 'import json; p=json.load(open(".build/localization-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Localization coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p >= 50 else 1)'

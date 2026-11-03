@@ -1,4 +1,5 @@
 #import "IEBDiagnosticExport.h"
+#import "../Localization/IEBLocalization.h"
 #import <errno.h>
 #import <stdlib.h>
 #import <string.h>
@@ -7,10 +8,7 @@
     BOOL _removed;
 }
 - (instancetype)initWithJSON:(NSData *)json readableText:(NSString *)text error:(NSError **)error {
-    return [self initWithJSON:json
-                 readableText:text
-                     language:NSBundle.mainBundle.preferredLocalizations.firstObject
-                        error:error];
+    return [self initWithJSON:json readableText:text language:IEBCurrentLanguage() error:error];
 }
 - (instancetype)initWithJSON:(NSData *)json
                 readableText:(NSString *)text
@@ -46,11 +44,9 @@
     if (![fm setAttributes:@{NSFilePosixPermissions : @0700} ofItemAtPath:_directory error:error])
         return nil;
     NSURL *folder = [NSURL fileURLWithPath:_directory isDirectory:YES];
-    NSString *code = [[language lowercaseString] stringByReplacingOccurrencesOfString:@"_" withString:@"-"];
-    NSString *base = [code componentsSeparatedByString:@"-"].firstObject;
-    BOOL hebrew = [base isEqual:@"he"] || [base isEqual:@"iw"];
+    NSString *resolved = IEBResolvedLanguage(language ? @[ language ] : NSLocale.preferredLanguages);
     NSArray *urls = @[
-        [folder URLByAppendingPathComponent:hebrew ? @"IEB-Diagnostics-he.txt" : @"IEB-Diagnostics-en.txt"],
+        [folder URLByAppendingPathComponent:[NSString stringWithFormat:@"IEB-Diagnostics-%@.txt", resolved]],
         [folder URLByAppendingPathComponent:@"IEB-Diagnostics.json"]
     ];
     NSArray *contents = @[ readable, json ];

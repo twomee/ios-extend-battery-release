@@ -1,4 +1,5 @@
 #import "../Sources/Diagnostics/IEBDiagnosticExport.h"
+#import "../Sources/Localization/IEBLocalization.h"
 #import <Foundation/Foundation.h>
 #import <sys/stat.h>
 #define C(x)                                                                                                 \
@@ -16,10 +17,8 @@ int main(void) {
             readableText:@"דוח אבחון סוללה"
                    error:&error];
         C(export && !error && export.fileURLs.count == 2);
-        NSString *preferred = [NSBundle.mainBundle.preferredLocalizations.firstObject lowercaseString];
-        BOOL hebrew = [preferred hasPrefix:@"he"] || [preferred hasPrefix:@"iw"];
-        C([export.fileURLs[0].lastPathComponent
-            isEqual:hebrew ? @"IEB-Diagnostics-he.txt" : @"IEB-Diagnostics-en.txt"]);
+        NSString *expectedName = [NSString stringWithFormat:@"IEB-Diagnostics-%@.txt", IEBCurrentLanguage()];
+        C([export.fileURLs[0].lastPathComponent isEqual:expectedName]);
         C([export.fileURLs[0].pathExtension isEqual:@"txt"] &&
           [export.fileURLs[1].pathExtension isEqual:@"json"]);
         NSString *directory = export.fileURLs[0].URLByDeletingLastPathComponent.path;
@@ -43,7 +42,7 @@ int main(void) {
         }
         C(![NSFileManager.defaultManager fileExistsAtPath:directory]);
         C(![[IEBDiagnosticExport alloc] initWithJSON:nil readableText:nil error:&error] && error);
-        for (NSString *language in @[ @"en", @"he", @"HE-il", @"iw", @"fr", @"../../he" ]) {
+        for (NSString *language in @[ @"en", @"he", @"HE-il", @"iw", @"fr", @"zz", @"../../he" ]) {
             IEBDiagnosticExport *localized =
                 [[IEBDiagnosticExport alloc] initWithJSON:[@"{}" dataUsingEncoding:NSUTF8StringEncoding]
                                              readableText:@"Report"
@@ -51,8 +50,10 @@ int main(void) {
                                                     error:&error];
             C(localized && !error);
             BOOL he = [@[ @"he", @"HE-il", @"iw" ] containsObject:language];
-            C([localized.fileURLs[0].lastPathComponent
-                isEqual:he ? @"IEB-Diagnostics-he.txt" : @"IEB-Diagnostics-en.txt"]);
+            C([localized.fileURLs[0].lastPathComponent isEqual:he ? @"IEB-Diagnostics-he.txt"
+                                                               : [language isEqual:@"fr"]
+                                                                   ? @"IEB-Diagnostics-fr.txt"
+                                                                   : @"IEB-Diagnostics-en.txt"]);
             C([localized.fileURLs[1].lastPathComponent isEqual:@"IEB-Diagnostics.json"]);
             C([localized removeTemporaryFiles:&error] && !error);
         }

@@ -1,3 +1,4 @@
+#import "../Localization/IEBLocalization.h"
 #import <UIKit/UIKit.h>
 @interface IEBStatisticsController : UITableViewController
 @property(nonatomic) BOOL nativeTablePresentation;
@@ -12,4 +13,3 @@
 - (instancetype)initWithLoader:(NSDictionary * (^)(double start, double end, NSError **error))loader
                catalogProvider:(NSDictionary * (^)(NSArray<NSString *> *identities))provider;
 @end
-NSString *IEBText(NSString *english, NSString *hebrew);

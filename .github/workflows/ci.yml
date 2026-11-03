@@ -20,7 +20,7 @@ jobs:
           .build/venv/bin/pip install -r requirements-dev.txt
       - name: Lint and format
         run: |
-          .build/venv/bin/clang-format --dry-run --Werror tools/*.m tools/*.h tests/*.m Sources/Session/*.[hm] Sources/Statistics/*.[hm] Sources/Presentation/*.[hm] Sources/Diagnostics/*.[hm] Sources/Compatibility/*.[hm] rootreader/*.[hm] producerprobe/*.[hm]
+          .build/venv/bin/clang-format --dry-run --Werror tools/*.m tools/*.h tests/*.m Sources/Session/*.[hm] Sources/Statistics/*.[hm] Sources/Presentation/*.[hm] Sources/Diagnostics/*.[hm] Sources/Compatibility/*.[hm] Sources/Localization/*.[hm] rootreader/*.[hm] producerprobe/*.[hm]
           for script in tools/*.sh; do sh -n "$script"; done
       - name: Tests and coverage (minimum 50% for response evaluator)
         run: tools/test.sh
@@ -67,3 +67,15 @@ jobs:
           for appearance in light dark; do
             IEB_PREVIEW_APPEARANCE="$appearance" sh tools/preview-ui.sh "$qa_sim"
           done
+
+  localization-additional:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify additional languages in both appearances
+        run: |
+          languages=$(python3 -c 'from pathlib import Path; print(" ".join(sorted(p.stem for p in Path("Resources/Localizations").glob("*.lproj") if p.stem not in ("en", "he"))))')
+          if [ -n "$languages" ]; then
+            sh tools/preview-localizations.sh $languages
+          fi

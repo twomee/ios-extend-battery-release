@@ -4,11 +4,17 @@ set -eu
 cd "$(dirname "$0")/.."
 preview_language=${IEB_PREVIEW_LANGUAGE:-he}
 preview_appearance=${IEB_PREVIEW_APPEARANCE:-light}
-case "$preview_language" in
-  en) preview_locale=en_US ;;
-  he) preview_locale=he_IL ;;
-  *) echo "IEB_PREVIEW_LANGUAGE must be en or he" >&2; exit 2 ;;
-esac
+preview_locale=$(python3 - "$preview_language" <<'PYLANG'
+from pathlib import Path
+import sys
+language = sys.argv[1]
+available = {path.stem for path in Path('Resources/Localizations').glob('*.lproj')}
+if language not in available:
+    raise SystemExit(f'Unsupported preview language: {language}')
+print(language.replace('-', '_'))
+PYLANG
+)
+expected_title=$(plutil -extract SINCE_UNPLUGGED raw -o - "Resources/Localizations/$preview_language.lproj/Localizable.strings" 2>/dev/null || plutil -extract SINCE_UNPLUGGED raw -o - Resources/Localizations/en.lproj/Localizable.strings)
 case "$preview_appearance" in
   light|dark) ;;
   *) echo "IEB_PREVIEW_APPEARANCE must be light or dark" >&2; exit 2 ;;
@@ -29,14 +35,15 @@ cleanup() {
 trap cleanup EXIT INT TERM
 app=.build/preview/IEBPreview.app
 mkdir -p "$app"
+python3 tools/build-localizations.py "$app/IEBLocalizations.bundle"
 python3 - "$app/Info.plist" <<'PY'
 import plistlib,sys
 with open(sys.argv[1], 'wb') as f:
-    plistlib.dump(dict(CFBundleIdentifier='com.idonamaan.ieb-preview', CFBundleExecutable='IEBPreview', CFBundleName='IEB Preview', CFBundlePackageType='APPL', CFBundleVersion='2', CFBundleShortVersionString='0.2', MinimumOSVersion='17.0', UIDeviceFamily=[1], UILaunchScreen={}, CFBundleLocalizations=['en','he']),f)
+    plistlib.dump(dict(CFBundleIdentifier='com.idonamaan.ieb-preview', CFBundleExecutable='IEBPreview', CFBundleName='IEB Preview', CFBundlePackageType='APPL', CFBundleVersion='2', CFBundleShortVersionString='0.2', MinimumOSVersion='17.0', UIDeviceFamily=[1], UILaunchScreen={}, CFBundleLocalizations=plistlib.load(open(str(__import__('pathlib').Path(sys.argv[1]).parent/'IEBLocalizations.bundle/Info.plist'), 'rb'))['CFBundleLocalizations']),f)
 PY
 xcrun --sdk iphonesimulator clang -target arm64-apple-ios17.0-simulator -fobjc-arc \
   -framework UIKit -framework Foundation -framework CoreGraphics -Wall -Wextra -Werror \
-  tests/StatisticsPreview.m Sources/Presentation/*.m Sources/Diagnostics/*.m Sources/Statistics/*.m \
+  tests/StatisticsPreview.m Sources/Localization/*.m Sources/Presentation/*.m Sources/Diagnostics/*.m Sources/Statistics/*.m \
   Sources/Session/IEBNativePowerWindow.m Sources/Session/IEBSessionStore.m Sources/Session/IEBSessionState.m -lsqlite3 -o "$app/IEBPreview"
 xcrun simctl boot "$preview_device" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$preview_device" -b >/dev/null
@@ -45,7 +52,7 @@ xcrun simctl install "$preview_device" "$app"
 data=$(xcrun simctl get_app_container "$preview_device" com.idonamaan.ieb-preview data)
 rm -f "$data/Documents/qa.plist"
 xcrun simctl ui "$preview_device" appearance "$preview_appearance"
-xcrun simctl launch "$preview_device" com.idonamaan.ieb-preview -AppleLanguages "($preview_language)" -AppleLocale "$preview_locale" -IEBPreviewLanguage "$preview_language" -IEBPreviewAppearance "$preview_appearance"
+xcrun simctl launch "$preview_device" com.idonamaan.ieb-preview -AppleLanguages "($preview_language)" -AppleLocale "$preview_locale" -IEBPreviewLanguage "$preview_language" -IEBPreviewAppearance "$preview_appearance" -IEBPreviewTitle "$expected_title"
 
 python3 - "$data/Documents" "$preview_language" "$preview_appearance" <<'PY'
 import pathlib,plistlib,shutil,sys,time

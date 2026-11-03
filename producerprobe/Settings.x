@@ -107,7 +107,7 @@ static void RememberGraphCell(UITableViewCell *cell) {
     if(values.count==2) {
         NSMutableArray *labels=[NSMutableArray new];
         for(id value in values) [labels addObject:[titles[value] ?: titles[[value description]] ?: [value description] description]];
-        [labels addObject:IEBText(@"Since Unplugged",@"מאז הניתוק")];
+        [labels addObject:IEBLocalized(@"SINCE_UNPLUGGED", @"Since Unplugged")];
         [specifier setValues:[values arrayByAddingObject:@2] titles:labels];
     }
     %orig;

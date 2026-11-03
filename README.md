@@ -8,7 +8,7 @@ Battery statistics since unplugging, inside Settings → Battery.
 - Native battery and activity charts, with Screen On and Screen Off time.
 - Separate app and system-process lists, app icons and process diagnostics.
 - Cycle history, comparisons and readable diagnostic exports.
-- English and Hebrew, with light and dark appearance.
+- System-language selection, with English fallback and light/dark appearance.
 
 Requires a rootless jailbreak. Currently supported on **iOS 17.1.1**; tested on iPhone 15 Pro.
 System accounting can update with a delay; unavailable measurements are shown explicitly.
@@ -26,6 +26,7 @@ The installable `.deb` is generated in `producerprobe/packages/`. Install it wit
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and local checks.
+Help improve or add a language: [translation guide](TRANSLATING.md).
 
 ## License
 

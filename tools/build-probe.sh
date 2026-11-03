@@ -2,6 +2,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p .build
+python3 tools/build-localizations.py .build/IEBLocalizations.bundle
 # Standalone metadata diagnostics intentionally run on unadmitted OS versions.
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc \
   -framework Foundation -Wall -Wextra -Werror \
@@ -72,7 +73,7 @@ xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   -framework Foundation -framework UIKit -framework CoreGraphics -lsqlite3 -Wall -Wextra -Werror \
   tools/process_probe.m Sources/Diagnostics/*.m Sources/Presentation/IEBApplicationCatalog.m Sources/Statistics/*.m \
-  Sources/Session/IEBNativePowerWindow.m Sources/Session/IEBSessionStore.m Sources/Session/IEBSessionState.m -o .build/ieb-process-probe
+  Sources/Session/IEBNativePowerWindow.m Sources/Session/IEBSessionStore.m Sources/Session/IEBSessionState.m Sources/Localization/IEBLocalization.m -o .build/ieb-process-probe
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   -framework Foundation -framework UIKit -framework CoreGraphics -Wall -Wextra -Werror \
   tools/native_chart_probe.m Sources/Presentation/IEBNativeChartController.m Sources/Statistics/IEBNativeChartData.m -o .build/ieb-native-chart-probe
@@ -92,9 +93,9 @@ xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   Sources/Diagnostics/IEBRootProcessClient.m Sources/Diagnostics/IEBRootProcessProtocol.m Sources/Diagnostics/IEBProcessSnapshot.m -o .build/ieb-root-transport-tests
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   -framework Foundation -Wall -Wextra -Werror tests/ReadableDiagnosticTests.m Sources/Diagnostics/IEBDiagnosticReport.m \
-  Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Statistics/IEBDataQuality.m -o .build/ieb-readable-report-tests
+  Sources/Diagnostics/IEBProcessReaderStatus.m Sources/Statistics/IEBDataQuality.m Sources/Localization/IEBLocalization.m -o .build/ieb-readable-report-tests
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
-  -framework Foundation -Wall -Wextra -Werror tests/DiagnosticExportTests.m Sources/Diagnostics/IEBDiagnosticExport.m -o .build/ieb-diagnostic-export-tests
+  -framework Foundation -Wall -Wextra -Werror tests/DiagnosticExportTests.m Sources/Diagnostics/IEBDiagnosticExport.m Sources/Localization/IEBLocalization.m -o .build/ieb-diagnostic-export-tests
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   -framework Foundation -lsqlite3 -Wall -Wextra -Werror tests/CycleHistoryTests.m Sources/Statistics/*.m \
   Sources/Session/IEBNativePowerWindow.m Sources/Session/IEBSessionStore.m Sources/Session/IEBSessionState.m -o .build/ieb-cycle-history-tests

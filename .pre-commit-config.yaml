@@ -16,6 +16,13 @@ repos:
         language: system
         pass_filenames: false
         files: '^(tools|tests|Sources|rootreader|producerprobe)/'
+      - id: translations
+        stages: [pre-commit]
+        name: Validate translation resources
+        entry: python3 tools/validate-localizations.py
+        language: system
+        pass_filenames: false
+        files: '^Resources/Localizations/'
       - id: secrets
         stages: [pre-commit]
         name: Scan staged changes for secrets

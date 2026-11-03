@@ -44,7 +44,7 @@ static void ChartTap(UIView *chart, double time) {
 }
 @end
 static NSArray<NSString *> *FixtureRangeItems(void) {
-    return @[ IEBText(@"24h", @"24 ש׳"), IEBText(@"10d", @"10 ימים"), IEBText(@"Since", @"מאז הניתוק") ];
+    return @[ IEBLocalized(@"24H", @"24h"), IEBLocalized(@"10D", @"10d"), IEBLocalized(@"SINCE", @"Since") ];
 }
 static BOOL RangeQA(void) {
     NativeRangeFixture *owner = [NativeRangeFixture new];
@@ -86,8 +86,9 @@ static BOOL RangeQA(void) {
     (void)table;
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                                    reuseIdentifier:nil];
-    cell.textLabel.text = index.section == 0 ? IEBText(@"Battery Health", @"בריאות הסוללה")
-                                             : IEBText(@"Native battery content", @"תוכן הסוללה המקורי");
+    cell.textLabel.text = index.section == 0
+                              ? IEBLocalized(@"BATTERY_HEALTH", @"Battery Health")
+                              : IEBLocalized(@"NATIVE_BATTERY_CONTENT", @"Native battery content");
     if (index.section == 1 && index.row == 0) {
         if (!self.range)
             self.range = [[UISegmentedControl alloc] initWithItems:FixtureRangeItems()];
@@ -582,11 +583,13 @@ static BOOL ReportPresentationQA(void) {
                             cellForRowAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:6]];
     BOOL rows =
         [stats tableView:stats.tableView numberOfRowsInSection:6] == 3 &&
-        [exportRow.textLabel.text isEqual:IEBText(@"Export Diagnostic Report", @"ייצוא דוח אבחון")] &&
+        [exportRow.textLabel.text
+            isEqual:IEBLocalized(@"EXPORT_DIAGNOSTIC_REPORT", @"Export Diagnostic Report")] &&
         [exportRow.detailTextLabel.text
-            isEqual:IEBText(@"Readable TXT in the interface language and technical JSON · aggregate data "
-                            @"only. Choose where to share.",
-                            @"דוח TXT קריא בשפת הממשק ו־JSON טכני · נתונים כלליים בלבד. בחירת היעד בידיך.")];
+            isEqual:IEBLocalized(
+                        @"READABLE_TXT_IN_THE_INTERFACE_LANGUAGE_AND_TECHNICAL_JSON_AGGREGATE_DATA_ON",
+                        @"Readable TXT in the interface language and technical JSON · aggregate data only. "
+                        @"Choose where to share.")];
     NSArray *before = [NSFileManager.defaultManager contentsOfDirectoryAtPath:NSTemporaryDirectory()
                                                                         error:NULL];
     [stats tableView:stats.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:6]];
@@ -834,8 +837,13 @@ static BOOL ComparisonTextQA(void) {
     NSString *energy = [comparison tableView:comparison.tableView
                            cellForRowAtIndexPath:[NSIndexPath indexPathForRow:3 inSection:0]]
                            .detailTextLabel.text;
-    good &= [energy containsString:@"\u20660.1%\u2069"] &&
-            [energy containsString:IEBText(@"lower", @"נמוך")] && ![energy containsString:@"20.0"];
+    good &=
+        [energy containsString:@"\u20660.1%\u2069"] &&
+        [energy containsString:[NSString
+                                   stringWithFormat:IEBLocalized(@"A_S_ESTIMATED_RATE_IS_LOWER_THAN_B_S",
+                                                                 @"A's estimated rate is %@ lower than B's."),
+                                                    @"\u20660.1%\u2069"]] &&
+        ![energy containsString:@"20.0"];
     ea[@"duration"] = @3600;
     ea[@"energy_per_hour"] = @1585414.2738826447;
     ea[@"energy_total"] = @([ea[@"energy_per_hour"] doubleValue]);
@@ -846,11 +854,21 @@ static BOOL ComparisonTextQA(void) {
                second:eb];
     UITableViewCell *relative = [comparison tableView:comparison.tableView
                                 cellForRowAtIndexPath:[NSIndexPath indexPathForRow:3 inSection:0]];
-    good &= [relative.textLabel.text containsString:IEBText(@"Relative", @"יחסי")] &&
-            [relative.detailTextLabel.text containsString:@"28.1%"] &&
-            [relative.detailTextLabel.text containsString:IEBText(@"higher", @"גבוה")] &&
-            ![relative.detailTextLabel.text containsString:IEBText(@"shorter", @"קצר")] &&
-            ![relative.detailTextLabel.text containsString:@"1585414"];
+    good &=
+        [relative.textLabel.text containsString:IEBLocalized(@"RELATIVE_CONSUMPTION_RATE_ESTIMATE",
+                                                             @"Relative consumption rate — estimate")] &&
+        [relative.detailTextLabel.text containsString:@"28.1%"] &&
+        [relative.detailTextLabel.text
+            containsString:[NSString
+                               stringWithFormat:IEBLocalized(@"A_S_ESTIMATED_RATE_IS_HIGHER_THAN_B_S",
+                                                             @"A's estimated rate is %@ higher than B's."),
+                                                @"\u206628.1%\u2069"]] &&
+        ![relative.detailTextLabel.text
+            containsString:IEBLocalized(
+                               @"A_CYCLE_IS_SHORTER_THAN_ONE_MINUTE_THERE_IS_NOT_ENOUGH_DATA_FOR_A_USEFUL_RA",
+                               @"— · A cycle is shorter than one minute; there is not enough data for a "
+                               @"useful rate comparison.")] &&
+        ![relative.detailTextLabel.text containsString:@"1585414"];
     ea[@"duration"] = @19.39;
     ea[@"energy_total"] = @([ea[@"energy_per_hour"] doubleValue] * 19.39 / 3600);
     comparison = [(UITableViewController *)[NSClassFromString(@"IEBCycleComparisonController") alloc]
@@ -859,8 +877,14 @@ static BOOL ComparisonTextQA(void) {
     energy = [comparison tableView:comparison.tableView
                  cellForRowAtIndexPath:[NSIndexPath indexPathForRow:3 inSection:0]]
                  .detailTextLabel.text;
-    good &= [energy containsString:@"—"] && [energy containsString:IEBText(@"shorter", @"קצר")] &&
-            ![energy containsString:@"28.1%"];
+    good &=
+        [energy containsString:@"—"] &&
+        [energy
+            containsString:IEBLocalized(
+                               @"A_CYCLE_IS_SHORTER_THAN_ONE_MINUTE_THERE_IS_NOT_ENOUGH_DATA_FOR_A_USEFUL_RA",
+                               @"— · A cycle is shorter than one minute; there is not enough data for a "
+                               @"useful rate comparison.")] &&
+        ![energy containsString:@"28.1%"];
     ea[@"duration"] = @3600;
     ea[@"energy_total"] = ea[@"energy_per_hour"];
     eb[@"energy_total"] = @0;
@@ -871,7 +895,12 @@ static BOOL ComparisonTextQA(void) {
     energy = [comparison tableView:comparison.tableView
                  cellForRowAtIndexPath:[NSIndexPath indexPathForRow:3 inSection:0]]
                  .detailTextLabel.text;
-    good &= [energy containsString:IEBText(@"baseline", @"בסיס")] && [energy containsString:@"—"];
+    good &=
+        [energy
+            containsString:IEBLocalized(
+                               @"B_HAS_NO_POSITIVE_ESTIMATED_RATE_TO_USE_AS_A_COMPARISON_BASELINE",
+                               @"— · B has no positive estimated rate to use as a comparison baseline.")] &&
+        [energy containsString:@"—"];
     return good;
 }
 static void HistoryQA(void (^completion)(BOOL)) {
@@ -938,7 +967,11 @@ static void HistoryQA(void (^completion)(BOOL)) {
                 UITableViewCell *energy = [comparison tableView:comparison.tableView
                                           cellForRowAtIndexPath:[NSIndexPath indexPathForRow:3 inSection:0]];
                 good &= [energy.detailTextLabel.text containsString:@"—"] &&
-                        [energy.detailTextLabel.text containsString:IEBText(@"shorter", @"קצר")];
+                        [energy.detailTextLabel.text
+                            containsString:IEBLocalized(@"A_CYCLE_IS_SHORTER_THAN_ONE_MINUTE_THERE_IS_NOT_"
+                                                        @"ENOUGH_DATA_FOR_A_USEFUL_RA",
+                                                        @"— · A cycle is shorter than one minute; there is "
+                                                        @"not enough data for a useful rate comparison.")];
             }
             [history viewWillDisappear:NO];
             window.hidden = YES;
@@ -1121,10 +1154,10 @@ static void LiveProcessesQA(void (^completion)(BOOL)) {
             return @{
                 @"Sample App" : @{@"name" : @"Sample App", @"icon" : icon, @"user_facing" : @YES},
                 @"Messages" :
-                    @{@"name" : IEBText(@"Messages", @"הודעות"), @"icon" : icon, @"user_facing" : @YES}
+                    @{@"name" : IEBLocalized(@"MESSAGES", @"Messages"), @"icon" : icon, @"user_facing" : @YES}
             };
         }];
-    controller.title = IEBText(@"Since Unplugged", @"מאז הניתוק");
+    controller.title = IEBLocalized(@"SINCE_UNPLUGGED", @"Since Unplugged");
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:controller];
     [self.window makeKeyAndVisible];
@@ -1142,18 +1175,16 @@ static void LiveProcessesQA(void (^completion)(BOOL)) {
         NSString *expectedLanguage = [NSUserDefaults.standardUserDefaults stringForKey:@"IEBPreviewLanguage"];
         NSString *expectedAppearance =
             [NSUserDefaults.standardUserDefaults stringForKey:@"IEBPreviewAppearance"];
-        BOOL hebrew = [expectedLanguage isEqual:@"he"];
+        BOOL rtl =
+            [NSLocale characterDirectionForLanguage:expectedLanguage] == NSLocaleLanguageDirectionRightToLeft;
+        NSString *expectedTitle = [NSUserDefaults.standardUserDefaults stringForKey:@"IEBPreviewTitle"];
         UIUserInterfaceStyle expectedStyle =
             [expectedAppearance isEqual:@"dark"] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
         NSMutableDictionary *qa = [@{
             @"language" : expectedLanguage ?: @"",
             @"appearance" : expectedAppearance ?: @"",
-            @"language_selected" :
-                @(([expectedLanguage isEqual:@"en"] || hebrew) &&
-                  [NSBundle.mainBundle.preferredLocalizations.firstObject isEqual:expectedLanguage] &&
-                  [IEBText(@"English sentinel", @"בדיקת עברית")
-                      isEqual:(hebrew ? @"בדיקת עברית" : @"English sentinel")] &&
-                  [controller.title isEqual:(hebrew ? @"מאז הניתוק" : @"Since Unplugged")]),
+            @"language_selected" : @([IEBCurrentLanguage() isEqual:expectedLanguage] &&
+                                     [controller.title isEqual:expectedTitle]),
             @"appearance_selected" : @(self.window.traitCollection.userInterfaceStyle == expectedStyle),
             @"panel_rebound" : @(PanelQA()),
             @"sections" : @([controller numberOfSectionsInTableView:controller.tableView]),
@@ -1191,25 +1222,28 @@ static void LiveProcessesQA(void (^completion)(BOOL)) {
               firstPercent.semanticContentAttribute == UISemanticContentAttributeForceLeftToRight);
         CGRect iconRect = [actualIcon convertRect:actualIcon.bounds toView:firstRow.contentView];
         UISemanticContentAttribute expectedDirection =
-            hebrew ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
+            rtl ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
         qa[@"layout_direction"] = @(firstRow.contentView.semanticContentAttribute == expectedDirection &&
                                     firstRow.contentView.effectiveUserInterfaceLayoutDirection ==
-                                        (hebrew ? UIUserInterfaceLayoutDirectionRightToLeft
-                                                : UIUserInterfaceLayoutDirectionLeftToRight) &&
-                                    (hebrew ? CGRectGetMidX(iconRect) > CGRectGetMidX(p1)
-                                            : CGRectGetMidX(iconRect) < CGRectGetMidX(p1)));
+                                        (rtl ? UIUserInterfaceLayoutDirectionRightToLeft
+                                             : UIUserInterfaceLayoutDirectionLeftToRight) &&
+                                    (rtl ? CGRectGetMidX(iconRect) > CGRectGetMidX(p1)
+                                         : CGRectGetMidX(iconRect) < CGRectGetMidX(p1)));
         NSString *summary = [controller tableView:controller.tableView
                                 cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]]
                                 .detailTextLabel.text;
         qa[@"clear_duration"] = @([summary rangeOfString:@"←"].location == NSNotFound &&
                                   [summary rangeOfString:@"→"].location == NSNotFound &&
-                                  [summary containsString:IEBText(@"Cycle duration", @"משך המחזור")]);
+                                  [summary rangeOfString:@"[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                                                 options:NSRegularExpressionSearch]
+                                          .location != NSNotFound);
         UITableViewCell *system = [controller tableView:controller.tableView
                                   cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:4]];
         qa[@"missing_percent_explained"] =
             @([RowLabel(system, @"nameLabel", system.textLabel).text isEqual:@"system.task"] &&
               [RowLabel(system, @"timesLabel", system.detailTextLabel).text
-                  containsString:IEBText(@"No energy attribution", @"אין שיוך צריכה")]);
+                  containsString:IEBLocalized(@"NO_ENERGY_ATTRIBUTION_IN_THE_SELECTED_RANGE",
+                                              @"No energy attribution in the selected range")]);
         UITableViewCell *activity = [controller tableView:controller.tableView
                                     cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:2]];
         UIView *chart = activity.contentView.subviews.lastObject;
@@ -1261,8 +1295,17 @@ static void LiveProcessesQA(void (^completion)(BOOL)) {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                     UITableViewController *details =
                         (UITableViewController *)controller.navigationController.topViewController;
-                    qa[@"details"] =
-                        @(details != controller && [details.tableView numberOfRowsInSection:0] == 7);
+                    [details.tableView layoutIfNeeded];
+                    BOOL detailValuesFit = YES;
+                    for (UITableViewCell *cell in details.tableView.visibleCells) {
+                        UILabel *value = cell.detailTextLabel;
+                        if (!value.text.length)
+                            continue;
+                        CGSize needed = [value.text sizeWithAttributes:@{NSFontAttributeName : value.font}];
+                        detailValuesFit &= value.bounds.size.width + 1 >= needed.width;
+                    }
+                    qa[@"details"] = @(details != controller &&
+                                       [details.tableView numberOfRowsInSection:0] == 7 && detailValuesFit);
                     UIImage *detailImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
                         (void)ctx;
                         [self.window drawViewHierarchyInRect:self.window.bounds afterScreenUpdates:YES];
@@ -1276,7 +1319,7 @@ static void LiveProcessesQA(void (^completion)(BOOL)) {
                         HeaderFixture *nativeSource = [HeaderFixture new];
                         UITableView *native = HeaderTable(owner, nativeSource, YES);
                         [controller.navigationController pushViewController:owner animated:NO];
-                        owner.title = IEBText(@"Battery", @"סוללה");
+                        owner.title = IEBLocalized(@"BATTERY", @"Battery");
                         UISegmentedControl *nativeRanges = nativeSource.range;
                         IEBStatisticsController *panel = [[IEBStatisticsController alloc]
                              initWithLoader:[controller valueForKey:@"loader"]

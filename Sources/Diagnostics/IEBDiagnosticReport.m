@@ -1,4 +1,5 @@
 #import "IEBDiagnosticReport.h"
+#import "../Localization/IEBLocalization.h"
 #import "../Statistics/IEBDataQuality.h"
 #import "IEBProcessReaderStatus.h"
 #import <math.h>
@@ -11,7 +12,7 @@ static id Seconds(id n) {
 static NSDictionary *Summary(NSDictionary *model, NSDictionary *snapshot) {
     return @{
         @"schema" : @1,
-        @"tweak_version" : @"0.2.22",
+        @"tweak_version" : @"0.2.24",
         @"quality" : IEBDataQuality(model),
         @"process_reader" : IEBProcessReaderStatus(snapshot),
         @"screen_on_seconds" : Seconds(model[@"screen_on"]),
@@ -29,126 +30,134 @@ NSData *IEBDiagnosticReport(NSDictionary *model, NSDictionary *snapshot, NSError
                                            options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys
                                              error:error];
 }
-static BOOL Hebrew(NSString *language) {
-    NSString *code = [[language lowercaseString] stringByReplacingOccurrencesOfString:@"_" withString:@"-"];
-    NSString *base = [code componentsSeparatedByString:@"-"].firstObject;
-    return [base isEqual:@"he"] || [base isEqual:@"iw"];
-}
-static NSString *Text(NSString *english, NSString *hebrewText, BOOL hebrew) {
-    return hebrew ? hebrewText : english;
-}
-static NSString *ReportDuration(id value, BOOL hebrew) {
+static NSString *ReportDuration(id value, NSString *language) {
     id checked = Seconds(value);
     if (checked == NSNull.null)
-        return Text(@"Unavailable", @"לא זמין", hebrew);
+        return IEBLocalizedInLanguage(@"UNAVAILABLE", @"Unavailable", language);
     NSInteger seconds = (NSInteger)round([checked doubleValue]);
     return [NSString stringWithFormat:@"%02ld:%02ld:%02ld", (long)(seconds / 3600), (long)(seconds / 60 % 60),
                                       (long)(seconds % 60)];
 }
-static NSString *Count(id value, BOOL hebrew) {
-    return [value isKindOfClass:NSNumber.class] ? [value description]
-                                                : Text(@"Unavailable", @"לא זמין", hebrew);
+static NSString *Count(id value, NSString *language) {
+    return [value isKindOfClass:NSNumber.class]
+               ? [value description]
+               : IEBLocalizedInLanguage(@"UNAVAILABLE", @"Unavailable", language);
 }
 NSString *IEBReadableDiagnosticReportInLanguage(NSDictionary *model, NSDictionary *snapshot,
                                                 NSString *language) {
-    BOOL hebrew = Hebrew(language);
     NSDictionary *report = Summary(model, snapshot), *quality = report[@"quality"],
                  *reader = report[@"process_reader"];
     NSString *state =
         [quality[@"state"] isEqual:@"recorded"]
-            ? Text(@"Overall recording reached the end of the range; per-app coverage is not guaranteed",
-                   @"הרישום הכללי הגיע לסוף הטווח; הכיסוי לכל אפליקציה אינו מובטח", hebrew)
+            ? IEBLocalizedInLanguage(
+                  @"OVERALL_RECORDING_REACHED_THE_END_OF_THE_RANGE_PER_APP_COVERAGE_IS_NOT_GUAR",
+                  @"Overall recording reached the end of the range; per-app coverage is not guaranteed",
+                  language)
         : [quality[@"state"] isEqual:@"partial"]
-            ? Text(@"Partial data; totals may change", @"נתונים חלקיים; הסכומים עשויים להשתנות", hebrew)
-            : Text(@"Data is unavailable", @"הנתונים אינם זמינים", hebrew);
-    NSString *energy =
-        [quality[@"energy_state"] isEqual:@"recorded"]
-            ? Text(@"Energy records span the range", @"רשומות הצריכה משתרעות על הטווח", hebrew)
-        : [quality[@"energy_state"] isEqual:@"partial"]
-            ? Text(@"Partial recording or unknown coverage", @"רישום חלקי או כיסוי לא ידוע", hebrew)
-            : Text(@"Unavailable", @"לא זמין", hebrew);
+            ? IEBLocalizedInLanguage(@"PARTIAL_DATA_TOTALS_MAY_CHANGE", @"Partial data; totals may change",
+                                     language)
+            : IEBLocalizedInLanguage(@"DATA_IS_UNAVAILABLE", @"Data is unavailable", language);
+    NSString *energy = [quality[@"energy_state"] isEqual:@"recorded"]
+                           ? IEBLocalizedInLanguage(@"ENERGY_RECORDS_SPAN_THE_RANGE",
+                                                    @"Energy records span the range", language)
+                       : [quality[@"energy_state"] isEqual:@"partial"]
+                           ? IEBLocalizedInLanguage(@"PARTIAL_RECORDING_OR_UNKNOWN_COVERAGE",
+                                                    @"Partial recording or unknown coverage", language)
+                           : IEBLocalizedInLanguage(@"UNAVAILABLE", @"Unavailable", language);
     BOOL root = [reader[@"provider"] isEqual:@"root"];
-    NSString *readerState = [reader[@"state"] isEqual:@"available"] ? Text(@"Available", @"זמינה", hebrew)
+    NSString *readerState = [reader[@"state"] isEqual:@"available"]
+                                ? IEBLocalizedInLanguage(@"AVAILABLE", @"Available", language)
                             : [reader[@"state"] isEqual:@"partial"]
-                                ? Text(@"Partial", @"חלקית", hebrew)
-                                : Text(@"Unavailable", @"לא זמינה", hebrew);
+                                ? IEBLocalizedInLanguage(@"PARTIAL", @"Partial", language)
+                                : IEBLocalizedInLanguage(@"UNAVAILABLE_2", @"Unavailable", language);
     NSString *reason =
-        root ? Text(@"Received a response from the root reader", @"התקבלה תשובה מקורא root", hebrew)
+        root ? IEBLocalizedInLanguage(@"RECEIVED_A_RESPONSE_FROM_THE_ROOT_READER",
+                                      @"Received a response from the root reader", language)
         : [reader[@"reason"] isEqual:@"caller-denied"]
-            ? Text(@"Reader authentication was denied", @"אימות הקורא נדחה", hebrew)
+            ? IEBLocalizedInLanguage(@"READER_AUTHENTICATION_WAS_DENIED", @"Reader authentication was denied",
+                                     language)
         : [reader[@"reason"] isEqual:@"service-timeout"]
-            ? Text(@"Root service timed out", @"שירות root לא השיב בזמן", hebrew)
-            : Text(@"Root service is unavailable or its response is invalid",
-                   @"שירות root אינו זמין או שתשובתו אינה תקינה", hebrew);
+            ? IEBLocalizedInLanguage(@"ROOT_SERVICE_TIMED_OUT", @"Root service timed out", language)
+            : IEBLocalizedInLanguage(@"ROOT_SERVICE_IS_UNAVAILABLE_OR_ITS_RESPONSE_IS_INVALID",
+                                     @"Root service is unavailable or its response is invalid", language);
     return [@[
-        Text(@"Battery diagnostic report — Since Unplugged", @"דוח אבחון סוללה — מאז הניתוק", hebrew),
-        [Text(@"Tweak version: ", @"גרסת הטוויק: ", hebrew) stringByAppendingString:report[@"tweak_version"]],
+        IEBLocalizedInLanguage(@"BATTERY_DIAGNOSTIC_REPORT_SINCE_UNPLUGGED",
+                               @"Battery diagnostic report — Since Unplugged", language),
+        [IEBLocalizedInLanguage(@"TWEAK_VERSION", @"Tweak version: ", language)
+            stringByAppendingString:report[@"tweak_version"]],
         @"",
-        [Text(@"Data status: ", @"מצב הנתונים: ", hebrew) stringByAppendingString:state],
-        [Text(@"Range duration: ", @"משך הטווח: ", hebrew)
-            stringByAppendingString:ReportDuration(quality[@"range_seconds"], hebrew)],
-        [Text(@"Screen on: ", @"זמן מסך: ", hebrew)
-            stringByAppendingString:ReportDuration(report[@"screen_on_seconds"], hebrew)],
-        [Text(@"Screen off usage: ", @"שימוש כשהמסך כבוי: ", hebrew)
-            stringByAppendingString:ReportDuration(report[@"screen_off_seconds"], hebrew)],
-        [NSString stringWithFormat:Text(@"Activity recorded up to %@ from the start of the range",
-                                        @"פעילות נרשמה עד %@ מתחילת הטווח", hebrew),
-                                   ReportDuration(quality[@"activity_recorded_seconds"], hebrew)],
-        [Text(@"Time awaiting activity recording: ", @"זמן שממתין לרישום פעילות: ", hebrew)
-            stringByAppendingString:ReportDuration(quality[@"pending_seconds"], hebrew)],
-        [Text(@"Energy data: ", @"נתוני צריכה: ", hebrew) stringByAppendingString:energy],
-        [Text(@"Battery level records: ", @"רישומי רמת סוללה: ", hebrew)
+        [IEBLocalizedInLanguage(@"DATA_STATUS", @"Data status: ", language) stringByAppendingString:state],
+        [IEBLocalizedInLanguage(@"RANGE_DURATION", @"Range duration: ", language)
+            stringByAppendingString:ReportDuration(quality[@"range_seconds"], language)],
+        [IEBLocalizedInLanguage(@"SCREEN_ON_2", @"Screen on: ", language)
+            stringByAppendingString:ReportDuration(report[@"screen_on_seconds"], language)],
+        [IEBLocalizedInLanguage(@"SCREEN_OFF_USAGE_2", @"Screen off usage: ", language)
+            stringByAppendingString:ReportDuration(report[@"screen_off_seconds"], language)],
+        [NSString stringWithFormat:IEBLocalizedInLanguage(
+                                       @"ACTIVITY_RECORDED_UP_TO_FROM_THE_START_OF_THE_RANGE",
+                                       @"Activity recorded up to %@ from the start of the range", language),
+                                   ReportDuration(quality[@"activity_recorded_seconds"], language)],
+        [IEBLocalizedInLanguage(@"TIME_AWAITING_ACTIVITY_RECORDING",
+                                @"Time awaiting activity recording: ", language)
+            stringByAppendingString:ReportDuration(quality[@"pending_seconds"], language)],
+        [IEBLocalizedInLanguage(@"ENERGY_DATA", @"Energy data: ", language) stringByAppendingString:energy],
+        [IEBLocalizedInLanguage(@"BATTERY_LEVEL_RECORDS", @"Battery level records: ", language)
             stringByAppendingString:[quality[@"levels_available"] boolValue]
-                                        ? Text(@"Available", @"זמינים", hebrew)
-                                        : Text(@"Unavailable", @"לא זמינים", hebrew)],
-        [Text(@"App source count: ", @"מספר מקורות אפליקציות: ", hebrew)
-            stringByAppendingString:Count(report[@"app_source_count"], hebrew)],
+                                        ? IEBLocalizedInLanguage(@"AVAILABLE_2", @"Available", language)
+                                        : IEBLocalizedInLanguage(@"UNAVAILABLE_3", @"Unavailable", language)],
+        [IEBLocalizedInLanguage(@"APP_SOURCE_COUNT", @"App source count: ", language)
+            stringByAppendingString:Count(report[@"app_source_count"], language)],
         [quality[@"recovered_cycle"] boolValue]
-            ? Text(@"The cycle was recovered up to the last save; the time after it is unknown.",
-                   @"המחזור שוחזר עד נקודת השמירה האחרונה; הזמן שאחריה אינו ידוע.", hebrew)
+            ? IEBLocalizedInLanguage(
+                  @"THE_CYCLE_WAS_RECOVERED_UP_TO_THE_LAST_SAVE_THE_TIME_AFTER_IT_IS_UNKNOWN",
+                  @"The cycle was recovered up to the last save; the time after it is unknown.", language)
             : @"",
         @"",
-        Text(@"Process reading", @"קריאת תהליכים", hebrew),
-        root ? Text(@"Data provider: Root access", @"ספק הנתונים: קריאה בהרשאות root", hebrew)
-             : Text(@"Data provider: Limited permissions", @"ספק הנתונים: הרשאות מוגבלות", hebrew),
-        [Text(@"Process snapshot: ", @"תמונת התהליכים: ", hebrew) stringByAppendingString:readerState],
-        [Text(@"Readable processes: ", @"תהליכים זמינים: ", hebrew)
-            stringByAppendingString:Count(reader[@"readable"], hebrew)],
-        [Text(@"Permission denied: ", @"ללא הרשאת קריאה: ", hebrew)
-            stringByAppendingString:Count(reader[@"denied"], hebrew)],
-        [Text(@"Vanished during sampling: ", @"נעלמו בזמן הדגימה: ", hebrew)
-            stringByAppendingString:Count(reader[@"vanished"], hebrew)],
-        [Text(@"Unnamed processes: ", @"תהליכים ללא שם: ", hebrew)
-            stringByAppendingString:Count(reader[@"unnamed"], hebrew)],
-        [Text(@"List truncated: ", @"הרשימה נקטעה: ", hebrew)
-            stringByAppendingString:[reader[@"truncated"] boolValue] ? Text(@"Yes", @"כן", hebrew)
-                                                                     : Text(@"No", @"לא", hebrew)],
-        [Text(@"Root service status: ", @"מצב שירות root: ", hebrew) stringByAppendingString:reason],
+        IEBLocalizedInLanguage(@"PROCESS_READING", @"Process reading", language),
+        root ? IEBLocalizedInLanguage(@"DATA_PROVIDER_ROOT_ACCESS", @"Data provider: Root access", language)
+             : IEBLocalizedInLanguage(@"DATA_PROVIDER_LIMITED_PERMISSIONS",
+                                      @"Data provider: Limited permissions", language),
+        [IEBLocalizedInLanguage(@"PROCESS_SNAPSHOT", @"Process snapshot: ", language)
+            stringByAppendingString:readerState],
+        [IEBLocalizedInLanguage(@"READABLE_PROCESSES", @"Readable processes: ", language)
+            stringByAppendingString:Count(reader[@"readable"], language)],
+        [IEBLocalizedInLanguage(@"PERMISSION_DENIED", @"Permission denied: ", language)
+            stringByAppendingString:Count(reader[@"denied"], language)],
+        [IEBLocalizedInLanguage(@"VANISHED_DURING_SAMPLING", @"Vanished during sampling: ", language)
+            stringByAppendingString:Count(reader[@"vanished"], language)],
+        [IEBLocalizedInLanguage(@"UNNAMED_PROCESSES", @"Unnamed processes: ", language)
+            stringByAppendingString:Count(reader[@"unnamed"], language)],
+        [IEBLocalizedInLanguage(@"LIST_TRUNCATED", @"List truncated: ", language)
+            stringByAppendingString:[reader[@"truncated"] boolValue]
+                                        ? IEBLocalizedInLanguage(@"YES", @"Yes", language)
+                                        : IEBLocalizedInLanguage(@"NO", @"No", language)],
+        [IEBLocalizedInLanguage(@"ROOT_SERVICE_STATUS", @"Root service status: ", language)
+            stringByAppendingString:reason],
         @"",
-        Text(@"How to interpret the data", @"איך לפרש את הנתונים", hebrew),
-        Text(@"All times use hours:minutes:seconds. Unavailable data is not zero.",
-             @"כל הזמנים מוצגים בשעות:דקות:שניות. נתונים לא זמינים אינם אפס.", hebrew),
-        Text(@"System data may arrive late. Current overall recording does not guarantee complete reporting "
-             @"from every app.",
-             @"נתוני המערכת עשויים להגיע באיחור. רישום כללי עדכני אינו מבטיח שכל אפליקציה דיווחה הכול.",
-             hebrew),
-        Text(@"The battery percentage in the interface is a relative share of recorded consumption, not "
-             @"percentage points of battery lost.",
-             @"אחוז הסוללה בממשק הוא חלק יחסי מהצריכה שנרשמה, ולא מספר נקודות האחוז שהסוללה איבדה.", hebrew),
-        Text(@"CPU time refers to the current process instance and is not converted to battery consumption. "
-             @"Background, audio and screen times must not be added automatically.",
-             @"זמן CPU מתייחס למופע התהליך הנוכחי ואינו מומר לצריכת סוללה. אין לחבר אוטומטית זמני רקע, שמע "
-             @"ומסך.",
-             hebrew),
-        Text(@"This report contains aggregate data only, with no app or process names, process IDs, paths or "
-             @"absolute dates.",
-             @"הדוח מכיל נתונים כלליים בלבד, ללא שמות אפליקציות ותהליכים, מזהי תהליכים, נתיבים או מועדים "
-             @"מוחלטים.",
-             hebrew)
+        IEBLocalizedInLanguage(@"HOW_TO_INTERPRET_THE_DATA", @"How to interpret the data", language),
+        IEBLocalizedInLanguage(@"ALL_TIMES_USE_HOURS_MINUTES_SECONDS_UNAVAILABLE_DATA_IS_NOT_ZERO",
+                               @"All times use hours:minutes:seconds. Unavailable data is not zero.",
+                               language),
+        IEBLocalizedInLanguage(@"SYSTEM_DATA_MAY_ARRIVE_LATE_CURRENT_OVERALL_RECORDING_DOES_NOT_GUARANTEE_CO",
+                               @"System data may arrive late. Current overall recording does not guarantee "
+                               @"complete reporting from every app.",
+                               language),
+        IEBLocalizedInLanguage(@"THE_BATTERY_PERCENTAGE_IN_THE_INTERFACE_IS_A_RELATIVE_SHARE_OF_RECORDED_CON",
+                               @"The battery percentage in the interface is a relative share of recorded "
+                               @"consumption, not percentage points of battery lost.",
+                               language),
+        IEBLocalizedInLanguage(
+            @"CPU_TIME_REFERS_TO_THE_CURRENT_PROCESS_INSTANCE_AND_IS_NOT_CONVERTED_TO_BAT",
+            @"CPU time refers to the current process instance and is not converted to battery consumption. "
+            @"Background, audio and screen times must not be added automatically.",
+            language),
+        IEBLocalizedInLanguage(@"THIS_REPORT_CONTAINS_AGGREGATE_DATA_ONLY_WITH_NO_APP_OR_PROCESS_NAMES_PROCE",
+                               @"This report contains aggregate data only, with no app or process names, "
+                               @"process IDs, paths or absolute dates.",
+                               language)
     ] componentsJoinedByString:@"\n"];
 }
 
 NSString *IEBReadableDiagnosticReport(NSDictionary *model, NSDictionary *snapshot) {
-    return IEBReadableDiagnosticReportInLanguage(model, snapshot,
-                                                 NSBundle.mainBundle.preferredLocalizations.firstObject);
+    return IEBReadableDiagnosticReportInLanguage(model, snapshot, IEBCurrentLanguage());
 }
