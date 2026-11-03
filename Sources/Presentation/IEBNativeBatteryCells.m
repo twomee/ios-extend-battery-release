@@ -45,7 +45,7 @@ static NSString *TimeText(UITableViewCell *cell, id seconds) {
         CFGetTypeID((__bridge CFTypeRef)seconds) == CFBooleanGetTypeID() ||
         !isfinite([seconds doubleValue]) || [seconds doubleValue] < 0)
         return @"—";
-    return ((id(*)(id, SEL, double))objc_msgSend)(
+    return ((id (*)(id, SEL, double))objc_msgSend)(
         cell, sel_registerName("getLoczlizedHourMinuteStringFromSeconds:"), [seconds doubleValue]);
 }
 void IEBRefreshNativeTimeUsage(UITableViewCell *cell) {
@@ -147,7 +147,7 @@ Class IEBNativeCellClassAtPath(id source, NSIndexPath *path) {
     Method lookupMethod = class_getInstanceMethod([source class], lookup);
     if (!source || !path || !lookupMethod || strcmp(method_getTypeEncoding(lookupMethod), "@24@0:8@16"))
         return Nil;
-    id specifier = ((id(*)(id, SEL, id))objc_msgSend)(source, lookup, path);
+    id specifier = ((id (*)(id, SEL, id))objc_msgSend)(source, lookup, path);
     SEL property = sel_registerName("propertyForKey:");
     Method propertyMethod = class_getInstanceMethod([specifier class], property);
     if (!propertyMethod || strcmp(method_getTypeEncoding(propertyMethod), "@24@0:8@16"))
@@ -155,7 +155,7 @@ Class IEBNativeCellClassAtPath(id source, NSIndexPath *path) {
     NSString *__unsafe_unretained *nativeKey =
         (NSString * __unsafe_unretained *)dlsym(RTLD_DEFAULT, "PSCellClassKey");
     NSString *key = nativeKey && [*nativeKey isKindOfClass:NSString.class] ? *nativeKey : @"cellClass";
-    id value = ((id(*)(id, SEL, id))objc_msgSend)(specifier, property, key);
+    id value = ((id (*)(id, SEL, id))objc_msgSend)(specifier, property, key);
     Class cls = object_isClass(value)                  ? value
                 : [value isKindOfClass:NSString.class] ? NSClassFromString(value)
                                                        : Nil;

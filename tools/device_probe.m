@@ -48,13 +48,13 @@ static NSDictionary *QueryWithUsageBucket(Class cls, NSDate *end, double span, B
     // Remapping is the existing tweak's proposed mechanism, being tested here.
     for (NSNumber *type in @[ @0, @1, @5, @7, @8 ]) {
         double bucket = type.intValue == 7 ? 900 : type.intValue == 8 ? usageBucket : span;
-        ((id(*)(id, SEL, long, id, double, double))objc_msgSend)(model, add, type.longValue, end, span,
-                                                                 bucket);
+        ((id (*)(id, SEL, long, id, double, double))objc_msgSend)(model, add, type.longValue, end, span,
+                                                                  bucket);
     }
-    ((id(*)(id, SEL, long, id, double, double))objc_msgSend)(model, add, 1, end, span, 3600.0);
+    ((id (*)(id, SEL, long, id, double, double))objc_msgSend)(model, add, 1, end, span, 3600.0);
     if (producer) {
         NSMutableDictionary *payload =
-            ((id(*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"queryPayload"));
+            ((id (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"queryPayload"));
         for (id key in [payload allKeys]) {
             if (![payload[key] isKindOfClass:[NSDictionary class]])
                 continue;
@@ -65,7 +65,7 @@ static NSDictionary *QueryWithUsageBucket(Class cls, NSDate *end, double span, B
     }
     ((void (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"addSkipPlistWriteKey"));
     ((void (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"runQuery"));
-    id response = ((id(*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"queryResult"));
+    id response = ((id (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"queryResult"));
     return @{
         @"requested_start" : @([end timeIntervalSince1970] - span),
         @"requested_end" : @([end timeIntervalSince1970]),
