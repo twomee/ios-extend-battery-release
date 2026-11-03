@@ -216,3 +216,10 @@ LLVM_PROFILE_FILE=.build/cycle-history.profraw .build/cycle-history-tests
 xcrun llvm-profdata merge -sparse .build/cycle-history.profraw -o .build/cycle-history.profdata
 xcrun llvm-cov export .build/cycle-history-tests -instr-profile=.build/cycle-history.profdata -summary-only Sources/Statistics/IEBCycleSummary.m > .build/cycle-history-coverage.json
 python3 -c 'import json; p=json.load(open(".build/cycle-history-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Cycle summary coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)'
+
+# Metadata diagnostics must never confuse selector presence with supported runtime behavior.
+xcrun clang -fobjc-arc -framework Foundation -Wall -Wextra -Werror -fprofile-instr-generate -fcoverage-mapping tests/CompatibilityEvidenceTests.m tools/IEBCompatibilityEvidence.m -o .build/compatibility-evidence-tests
+LLVM_PROFILE_FILE=.build/compatibility-evidence.profraw .build/compatibility-evidence-tests
+xcrun llvm-profdata merge -sparse .build/compatibility-evidence.profraw -o .build/compatibility-evidence.profdata
+xcrun llvm-cov export .build/compatibility-evidence-tests -instr-profile=.build/compatibility-evidence.profdata -summary-only tools/IEBCompatibilityEvidence.m > .build/compatibility-evidence-coverage.json
+python3 -c 'import json; p=json.load(open(".build/compatibility-evidence-coverage.json"))["data"][0]["totals"]["lines"]["percent"]; print(f"Compatibility evidence coverage: {p:.1f}% (minimum 50%)"); raise SystemExit(0 if p>=50 else 1)'
