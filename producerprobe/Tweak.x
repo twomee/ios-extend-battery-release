@@ -1,4 +1,5 @@
 #import "../Sources/Compatibility/IEBPlatformSupport.h"
+#import "../Sources/Compatibility/IEBCollectorBootstrap.h"
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import <mach-o/dyld.h>
@@ -61,32 +62,38 @@
 %end
 %end
 
-static BOOL activityAttempted;
-static void InstallActivityHooks(void) {
-    if (activityAttempted || getuid() != 501 || ![NSProcessInfo.processInfo.processName isEqual:@"PerfPowerServices"]) return;
+static BOOL NativeCollectorABIReady(void) {
     Class cls = NSClassFromString(@"PLAppTimeService");
-    if (!cls) return;
-    activityAttempted = YES;
+    if (!cls) return NO;
     Method log = class_getInstanceMethod(cls, @selector(logProportionateAggregateEntry:withStartDate:withEndDate:));
     Method subscript = class_getInstanceMethod(NSClassFromString(@"PLEntry"), @selector(objectForKeyedSubscript:));
-    BOOL abi = log && subscript && strcmp(method_getTypeEncoding(log), "v40@0:8@16@24@32") == 0 &&
-        strcmp(method_getTypeEncoding(subscript), "@24@0:8@16") == 0;
     Method power = class_getInstanceMethod(cls, sel_registerName("handleBatteryCallback:"));
     Method entryDate = class_getInstanceMethod(NSClassFromString(@"PLEntry"), sel_registerName("entryDate"));
     Method clock = class_getClassMethod(NSDate.class, sel_registerName("monotonicDate"));
-    BOOL nativeABI = abi && power && entryDate && clock &&
+    return log && subscript && power && entryDate && clock &&
+        strcmp(method_getTypeEncoding(log), "v40@0:8@16@24@32") == 0 &&
+        strcmp(method_getTypeEncoding(subscript), "@24@0:8@16") == 0 &&
         strcmp(method_getTypeEncoding(power), "v24@0:8@16") == 0 &&
         strcmp(method_getTypeEncoding(entryDate), "@16@0:8") == 0 &&
         strcmp(method_getTypeEncoding(clock), "@16@0:8") == 0;
-    if (abi) { %init(IEBNativeActivityHooks); }
-    if (nativeABI) { %init(IEBNativePowerHooks); }
-    dispatch_async(dispatch_get_main_queue(), ^{
-        IEBStartActivityCapture(abi);
-        NSDate *(^provider)(void) = nativeABI ? ^NSDate *{
-            return ((id (*)(id, SEL))objc_msgSend)(NSDate.class, sel_registerName("monotonicDate"));
-        } : nil;
-        IEBStartNativeCapture(provider);
+}
+static void InstallActivityHooks(void) {
+    if (getuid() != 501 || ![NSProcessInfo.processInfo.processName isEqual:@"PerfPowerServices"]) return;
+    static IEBCollectorBootstrap *bootstrap;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        bootstrap = [[IEBCollectorBootstrap alloc] initWithReadiness:^{
+            return NativeCollectorABIReady();
+        } start:^{
+            %init(IEBNativeActivityHooks);
+            %init(IEBNativePowerHooks);
+            IEBStartActivityCapture(YES);
+            IEBStartNativeCapture(^NSDate *{
+                return ((id (*)(id, SEL))objc_msgSend)(NSDate.class, sel_registerName("monotonicDate"));
+            });
+        }];
     });
+    [bootstrap attempt];
 }
 
 static BOOL installed;
@@ -107,13 +114,13 @@ static void InstallHooks(void) {
 static void ImageAdded(const struct mach_header *header, intptr_t slide) {
     (void)slide;
     Dl_info info;
-    if (dladdr(header, &info) && info.dli_fname && strstr(info.dli_fname, "PowerlogHelperdOperators"))
+    if (dladdr(header, &info) && info.dli_fname && IEBIsCollectorFrameworkImage(info.dli_fname))
         dispatch_async(dispatch_get_main_queue(), ^{ InstallHooks(); });
 }
 
 %ctor {
     @autoreleasepool {
         _dyld_register_func_for_add_image(ImageAdded);
-        InstallHooks();
+        dispatch_async(dispatch_get_main_queue(), ^{ InstallHooks(); });
     }
 }

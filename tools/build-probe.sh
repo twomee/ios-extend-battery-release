@@ -2,6 +2,10 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p .build
+# Standalone metadata diagnostics intentionally run on unadmitted OS versions.
+xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc \
+  -framework Foundation -Wall -Wextra -Werror \
+  tools/compatibility_probe.m tools/IEBCompatibilityEvidence.m -o .build/ieb-compatibility-probe
 xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=17.0 -fobjc-arc \
   -framework Foundation -Wall -Wextra -Werror \
   tests/PlatformSupportTests.m -o .build/ieb-platform-support-tests
@@ -109,6 +113,7 @@ if command -v ldid >/dev/null 2>&1; then
   ldid -S .build/ieb-process-probe
   ldid -S .build/ieb-root-reader
   ldid -S .build/ieb-root-transport-tests
+  ldid -S .build/ieb-compatibility-probe
   ldid -S .build/ieb-probe
   ldid -S .build/ieb-screen-activity-tests
   ldid -S .build/ieb-catalog-probe
