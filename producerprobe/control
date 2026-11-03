@@ -1,0 +1,10 @@
+Package: com.idonamaan.iebproducerprobe
+Name: IEB Since Unplugged Preview
+Version: 0.2.22
+Architecture: iphoneos-arm64
+Description: English/Hebrew since-unplug battery statistics for iOS 17.1.1 (21B91); experimental native accounting
+Maintainer: idonamaan <idonamaan@users.noreply.github.com>
+Author: idonamaan
+Section: Development
+Depends: mobilesubstrate
+License: MIT

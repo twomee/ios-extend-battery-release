@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.idonamaan.ieb.process-reader</string>
+<key>ProgramArguments</key><array><string>/var/jb/usr/libexec/ieb-process-reader</string></array>
+<key>UserName</key><string>root</string>
+<key>MachServices</key><dict><key>com.idonamaan.ieb.process-reader</key><true/></dict>
+<key>RunAtLoad</key><false/>
+<key>KeepAlive</key><false/>
+<key>EnableTransactions</key><true/>
+<key>EnablePressuredExit</key><true/>
+</dict></plist>

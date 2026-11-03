@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+case "${1:-}" in
+  remove|deconfigure|upgrade)
+    service=com.idonamaan.ieb.process-reader
+    if /var/jb/usr/bin/launchctl print "system/$service" >/dev/null 2>&1; then
+      /var/jb/usr/bin/launchctl bootout "system/$service"
+    fi
+    ;;
+esac

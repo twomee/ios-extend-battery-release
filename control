@@ -1,0 +1,9 @@
+Package: com.idonamaan.iosextendbattery
+Name: iOSExtendBattery
+Version: 0.0.3
+Architecture: iphoneos-arm64
+Description: Adds a "Since Last Charge" tab to Settings > Battery with the same stats as Last 24 Hours / Last 10 Days
+Maintainer: idonamaan <idonamaan@users.noreply.github.com>
+Author: idonamaan
+Section: Tweaks
+Depends: mobilesubstrate

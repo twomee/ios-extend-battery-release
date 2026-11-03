@@ -1,0 +1,59 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up formatting tool
+        run: |
+          python3 -m venv .build/venv
+          .build/venv/bin/pip install -r requirements-dev.txt
+      - name: Lint and format
+        run: |
+          .build/venv/bin/clang-format --dry-run --Werror tools/*.m tools/*.h tests/*.m Sources/Session/*.[hm] Sources/Statistics/*.[hm] Sources/Presentation/*.[hm] Sources/Diagnostics/*.[hm] Sources/Compatibility/*.h rootreader/*.[hm] producerprobe/*.[hm]
+          for script in tools/*.sh; do sh -n "$script"; done
+      - name: Tests and coverage (minimum 50% for response evaluator)
+        run: tools/test.sh
+      - name: Build iOS diagnostic
+        run: tools/build-probe.sh
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: theos/theos
+          ref: 6e7b8c40e0f5f9f5b2377800dc1e42cd2560d24a
+          path: .build/theos
+          submodules: recursive
+      - name: Install jailbreak signing tool
+        run: brew install ldid
+      - name: Build legacy tweak for compatibility only
+        run: |
+          export THEOS="$GITHUB_WORKSPACE/.build/theos"
+          mkdir -p "$THEOS/sdks"
+          sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
+          ln -s "$(xcrun --sdk iphoneos --show-sdk-path)" "$THEOS/sdks/iPhoneOS${sdk_version}.sdk"
+          make package FINALPACKAGE=1
+      - name: Build opt-in producer diagnostic package
+        run: THEOS="$GITHUB_WORKSPACE/.build/theos" make -C producerprobe package FINALPACKAGE=1
+
+  localization-ui:
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [en, he]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify language, layout and both appearances
+        env:
+          IEB_PREVIEW_LANGUAGE: ${{ matrix.language }}
+        run: |
+          for appearance in light dark; do
+            IEB_PREVIEW_APPEARANCE="$appearance" sh tools/preview-ui.sh
+          done

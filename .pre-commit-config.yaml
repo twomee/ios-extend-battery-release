@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: objc-format
+        name: Format diagnostic Objective-C
+        entry: clang-format -i
+        language: python
+        additional_dependencies: [clang-format==19.1.7]
+        files: '^(tools|tests|Sources|rootreader|producerprobe)/.*\.[hm]$'
+      - id: objc-tests
+        name: Test diagnostic response evaluator
+        entry: tools/test.sh
+        language: system
+        pass_filenames: false
+        files: '^(tools|tests|Sources|rootreader|producerprobe)/'
+      - id: secrets
+        name: Scan staged changes for secrets
+        entry: gitleaks git --pre-commit --staged --redact
+        language: system
+        pass_filenames: false
