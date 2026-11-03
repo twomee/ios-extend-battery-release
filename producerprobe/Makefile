@@ -7,7 +7,7 @@ IEBProducerProbe_FILES = ../Sources/Compatibility/IEBCollectorBootstrap.m Tweak.
 IEBProducerProbe_CFLAGS = -fobjc-arc -Wall -Wextra -Werror
 IEBProducerProbe_FRAMEWORKS = Foundation
 IEBProducerProbe_LIBRARIES = sqlite3
-IEBBatterySettings_FILES = Settings.x $(wildcard ../Sources/Presentation/*.m) $(wildcard ../Sources/Diagnostics/*.m) $(wildcard ../Sources/Statistics/*.m) ../Sources/Session/IEBNativePowerWindow.m ../Sources/Session/IEBSessionStore.m ../Sources/Session/IEBSessionState.m
+IEBBatterySettings_FILES = ../Sources/Localization/IEBLocalization.m Settings.x $(wildcard ../Sources/Presentation/*.m) $(wildcard ../Sources/Diagnostics/*.m) $(wildcard ../Sources/Statistics/*.m) ../Sources/Session/IEBNativePowerWindow.m ../Sources/Session/IEBSessionStore.m ../Sources/Session/IEBSessionState.m
 IEBBatterySettings_CFLAGS = -fobjc-arc -Wall -Wextra -Werror
 IEBBatterySettings_FRAMEWORKS = UIKit Foundation CoreGraphics
 IEBBatterySettings_LIBRARIES = sqlite3
@@ -19,6 +19,7 @@ ieb-process-reader_FRAMEWORKS = Foundation
 ieb-process-reader_INSTALL_PATH = /usr/libexec
 include $(THEOS_MAKE_PATH)/tool.mk
 after-stage::
+	@python3 "$(THEOS_PROJECT_DIR)/../tools/build-localizations.py" "$(THEOS_STAGING_DIR)/Library/Application Support/iOSExtendBattery/IEBLocalizations.bundle"
 	@mkdir -p "$(THEOS_STAGING_DIR)/usr/share/doc/com.idonamaan.iebproducerprobe"
 	@cp "$(THEOS_PROJECT_DIR)/../LICENSE" "$(THEOS_STAGING_DIR)/usr/share/doc/com.idonamaan.iebproducerprobe/copyright"
 	@cp "$(THEOS_PROJECT_DIR)/../THIRD_PARTY_NOTICES.md" "$(THEOS_STAGING_DIR)/usr/share/doc/com.idonamaan.iebproducerprobe/THIRD_PARTY_NOTICES.md"
@@ -30,3 +31,4 @@ after-package::
 	@python3 ../tools/package_ownership.py "$(_THEOS_DEB_PACKAGE_FILENAME)"
 	@python3 ../tools/package_ownership.py --check "$(_THEOS_DEB_PACKAGE_FILENAME)"
 	@python3 "$(THEOS_PROJECT_DIR)/../tools/verify_release_license.py" "$(_THEOS_DEB_PACKAGE_FILENAME)"
+	@python3 "$(THEOS_PROJECT_DIR)/../tools/verify_localization_package.py" "$(_THEOS_DEB_PACKAGE_FILENAME)"

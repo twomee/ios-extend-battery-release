@@ -11,31 +11,30 @@ static NSString *CountText(id value) { return value == NSNull.null ? @"—" : [v
 NSString *IEBProcessStatusText(NSDictionary *snapshot) {
     NSDictionary *status = IEBProcessReaderStatus(snapshot);
     NSString *provider = [status[@"provider"] isEqual:@"root"]
-                             ? IEBText(@"Root reader", @"קריאה בהרשאות root")
-                             : IEBText(@"Limited permissions", @"הרשאות מוגבלות");
+                             ? IEBLocalized(@"ROOT_READER", @"Root reader")
+                             : IEBLocalized(@"LIMITED_PERMISSIONS", @"Limited permissions");
     NSString *state = [status[@"state"] isEqual:@"available"]
-                          ? IEBText(@"Snapshot available", @"תמונת התהליכים זמינה")
+                          ? IEBLocalized(@"SNAPSHOT_AVAILABLE", @"Snapshot available")
                       : [status[@"state"] isEqual:@"partial"]
-                          ? IEBText(@"Partial snapshot · energy matching may be unavailable",
-                                    @"תמונת תהליכים חלקית · ייתכן שלא יוצגו אחוזי סוללה")
-                          : IEBText(@"Snapshot unavailable", @"תמונת התהליכים אינה זמינה");
+                          ? IEBLocalized(@"PARTIAL_SNAPSHOT_ENERGY_MATCHING_MAY_BE_UNAVAILABLE",
+                                         @"Partial snapshot · energy matching may be unavailable")
+                          : IEBLocalized(@"SNAPSHOT_UNAVAILABLE", @"Snapshot unavailable");
     NSString *reason = @"";
     if (![status[@"provider"] isEqual:@"root"]) {
         if ([status[@"reason"] isEqual:@"caller-denied"])
-            reason = IEBText(@"Caller authentication denied.", @"אימות הרשאת הקורא נדחה.");
+            reason = IEBLocalized(@"CALLER_AUTHENTICATION_DENIED", @"Caller authentication denied.");
         else if ([status[@"reason"] isEqual:@"service-timeout"])
-            reason = IEBText(@"Root service response timed out.", @"שירות root לא השיב בזמן.");
+            reason = IEBLocalized(@"ROOT_SERVICE_RESPONSE_TIMED_OUT", @"Root service response timed out.");
         else
-            reason = IEBText(@"Root service unavailable or response invalid.",
-                             @"שירות root אינו זמין או שתשובתו אינה תקינה.");
+            reason = IEBLocalized(@"ROOT_SERVICE_UNAVAILABLE_OR_RESPONSE_INVALID",
+                                  @"Root service unavailable or response invalid.");
     }
     return [NSString
-        stringWithFormat:IEBText(@"%@ · %@\nReadable %@ · denied %@ · vanished %@ · unnamed %@%@\n%@",
-                                 @"%@ · %@\nזמינים %@ · ללא הרשאה %@ · נעלמו %@ · ללא שם %@%@\n%@"),
+        stringWithFormat:IEBLocalized(@"READABLE_DENIED_VANISHED_UNNAMED",
+                                      @"%@ · %@\nReadable %@ · denied %@ · vanished %@ · unnamed %@%@\n%@"),
                          provider, state, CountText(status[@"readable"]), CountText(status[@"denied"]),
                          CountText(status[@"vanished"]), CountText(status[@"unnamed"]),
-                         [status[@"truncated"] boolValue] ? IEBText(@" · truncated", @" · הרשימה נקטעה")
-                                                          : @"",
+                         [status[@"truncated"] boolValue] ? IEBLocalized(@"TRUNCATED", @" · truncated") : @"",
                          reason];
 }
 @interface IEBProcessesController ()
@@ -54,7 +53,7 @@ NSString *IEBProcessStatusText(NSDictionary *snapshot) {
     self = [super initWithStyle:UITableViewStyleInsetGrouped];
     if (self) {
         _loader = [loader copy];
-        self.title = IEBText(@"Live Processes", @"תהליכים פעילים");
+        self.title = IEBLocalized(@"LIVE_PROCESSES", @"Live Processes");
     }
     return self;
 }
@@ -65,12 +64,14 @@ NSString *IEBProcessStatusText(NSDictionary *snapshot) {
     self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
     self.searchController.searchResultsUpdater = self;
     self.searchController.obscuresBackgroundDuringPresentation = NO;
-    self.searchController.searchBar.placeholder = IEBText(@"Process name or PID", @"שם תהליך או PID");
+    self.searchController.searchBar.placeholder =
+        IEBLocalized(@"PROCESS_NAME_OR_PID", @"Process name or PID");
     self.navigationItem.searchController = self.searchController;
     self.navigationItem.hidesSearchBarWhenScrolling = NO;
     self.definesPresentationContext = YES;
     self.sortControl = [[UISegmentedControl alloc] initWithItems:@[
-        @"CPU", IEBText(@"CPU time", @"זמן CPU"), IEBText(@"Battery", @"סוללה"), IEBText(@"Name", @"שם")
+        @"CPU", IEBLocalized(@"CPU_TIME", @"CPU time"), IEBLocalized(@"BATTERY", @"Battery"),
+        IEBLocalized(@"NAME", @"Name")
     ]];
     self.sortControl.selectedSegmentIndex = 0;
     [self.sortControl addTarget:self
@@ -163,39 +164,32 @@ NSString *IEBProcessStatusText(NSDictionary *snapshot) {
     (void)table;
     (void)section;
     return self.snapshot
-               ? [NSString stringWithFormat:IEBText(@"Showing %lu of %lu\n%@", @"מוצגים %lu מתוך %lu\n%@"),
+               ? [NSString stringWithFormat:IEBLocalized(@"SHOWING_LU_OF_LU", @"Showing %lu of %lu\n%@"),
                                             (unsigned long)self.rows.count, (unsigned long)self.allRows.count,
                                             IEBProcessStatusText(self.snapshot)]
-               : IEBText(@"Reading process permissions…", @"בודק הרשאות תהליכים…");
+               : IEBLocalized(@"READING_PROCESS_PERMISSIONS", @"Reading process permissions…");
 }
 - (NSString *)tableView:(UITableView *)table titleForFooterInSection:(NSInteger)section {
     (void)table;
     (void)section;
-    NSString *provider = [self.snapshot[@"reader_provider"] isEqual:@"root-service"]
-                             ? IEBText(@"Read through the root service. Kernel task (PID 0) is excluded.",
-                                       @"הנתונים נקראים באמצעות שירות root. משימת הקרנל (PID 0) אינה נכללת.")
-                             : IEBText(@"Root service unavailable; limited process access.",
-                                       @"שירות root אינו זמין; הגישה לתהליכים מוגבלת.");
+    NSString *provider =
+        [self.snapshot[@"reader_provider"] isEqual:@"root-service"]
+            ? IEBLocalized(@"READ_THROUGH_THE_ROOT_SERVICE_KERNEL_TASK_PID_0_IS_EXCLUDED",
+                           @"Read through the root service. Kernel task (PID 0) is excluded.")
+            : IEBLocalized(@"ROOT_SERVICE_UNAVAILABLE_LIMITED_PROCESS_ACCESS",
+                           @"Root service unavailable; limited process access.");
     return [[provider stringByAppendingString:@"\n"]
         stringByAppendingString:
-            [NSString
-                stringWithFormat:
-                    IEBText(
-                        @"%lu readable · %lu permission denied. CPU time is cumulative for the current "
-                        @"process "
-                        @"lifetime; CPU %% is sampled every 5 seconds and can exceed 100 across cores. "
-                        @"Battery "
-                        @"%% is the matched source's share in the full unplug cycle, including prior "
-                        @"instances. "
-                        @"It is not calculated from CPU. Unmatched/ambiguous sources remain unavailable.",
-                        @"%lu תהליכים זמינים · %lu ללא הרשאת קריאה. זמן CPU מצטבר מאז תחילת מופע התהליך; "
-                        @"אחוז "
-                        @"CPU נמדד כל 5 שניות ויכול לעבור 100 במספר ליבות. אחוז הסוללה הוא חלק מקור האנרגיה "
-                        @"במחזור הניתוק המלא, כולל מופעים קודמים. הוא אינו מחושב מה־CPU. שיוך חסר או לא "
-                        @"חד־משמעי "
-                        @"נשאר לא זמין."),
-                    (unsigned long)self.allRows.count,
-                    [self.snapshot[@"permission_denied_count"] unsignedLongValue]]];
+            [NSString stringWithFormat:
+                          IEBLocalized(
+                              @"LU_READABLE_LU_PERMISSION_DENIED_CPU_TIME_IS_CUMULATIVE_FOR_THE_CURRENT_PRO",
+                              @"%lu readable · %lu permission denied. CPU time is cumulative for the current "
+                              @"process lifetime; CPU %% is sampled every 5 seconds and can exceed 100 "
+                              @"across cores. Battery %% is the matched source's share in the full unplug "
+                              @"cycle, including prior instances. It is not calculated from CPU. "
+                              @"Unmatched/ambiguous sources remain unavailable."),
+                          (unsigned long)self.allRows.count,
+                          [self.snapshot[@"permission_denied_count"] unsignedLongValue]]];
 }
 - (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)path {
     if (!self.rows.count) {
@@ -204,10 +198,11 @@ NSString *IEBProcessStatusText(NSDictionary *snapshot) {
         cell.textLabel.numberOfLines = 0;
         cell.textLabel.text =
             self.allRows.count
-                ? IEBText(@"No processes match the search.", @"לא נמצאו תהליכים שתואמים לחיפוש.")
-            : self.snapshot ? IEBText(@"Process CPU information is unavailable with current permissions.",
-                                      @"נתוני CPU לתהליכים אינם זמינים בהרשאות הנוכחיות.")
-                            : IEBText(@"Loading…", @"טוען…");
+                ? IEBLocalized(@"NO_PROCESSES_MATCH_THE_SEARCH", @"No processes match the search.")
+            : self.snapshot
+                ? IEBLocalized(@"PROCESS_CPU_INFORMATION_IS_UNAVAILABLE_WITH_CURRENT_PERMISSIONS",
+                               @"Process CPU information is unavailable with current permissions.")
+                : IEBLocalized(@"LOADING", @"Loading…");
         return cell;
     }
     IEBSourceCell *cell = [table dequeueReusableCellWithIdentifier:@"process"];
@@ -215,19 +210,20 @@ NSString *IEBProcessStatusText(NSDictionary *snapshot) {
         cell = [[IEBSourceCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"process"];
     NSDictionary *row = self.rows[(NSUInteger)path.row];
     id percent = row[@"energy_percent"], cpu = row[@"cpu_percent"];
-    NSString *details =
-        [NSString stringWithFormat:IEBText(@"PID %@\nCPU lifetime: %@\nCurrent CPU: %@\n%@",
-                                           @"PID %@\nזמן CPU מצטבר: %@\nCPU נוכחי: %@\n%@"),
-                                   row[@"pid"], CPUTime(row[@"cpu_seconds"]),
-                                   [cpu isKindOfClass:NSNumber.class]
-                                       ? [NSString stringWithFormat:@"%.1f%%", [cpu doubleValue]]
-                                       : IEBText(@"Waiting for second sample", @"ממתין לדגימה נוספת"),
-                                   [percent isKindOfClass:NSNumber.class]
-                                       ? IEBText(@"Battery share · full unplug cycle",
-                                                 @"חלק בצריכת הסוללה · מחזור הניתוק המלא")
-                                       : IEBText(@"No unambiguous energy attribution",
-                                                 @"אין שיוך חד־משמעי לצריכת סוללה")];
-    [cell configureName:[row[@"name"] length] ? row[@"name"] : IEBText(@"Unnamed process", @"תהליך ללא שם")
+    NSString *details = [NSString
+        stringWithFormat:IEBLocalized(@"PID_CPU_LIFETIME_CURRENT_CPU",
+                                      @"PID %@\nCPU lifetime: %@\nCurrent CPU: %@\n%@"),
+                         row[@"pid"], CPUTime(row[@"cpu_seconds"]),
+                         [cpu isKindOfClass:NSNumber.class]
+                             ? [NSString stringWithFormat:@"%.1f%%", [cpu doubleValue]]
+                             : IEBLocalized(@"WAITING_FOR_SECOND_SAMPLE", @"Waiting for second sample"),
+                         [percent isKindOfClass:NSNumber.class]
+                             ? IEBLocalized(@"BATTERY_SHARE_FULL_UNPLUG_CYCLE",
+                                            @"Battery share · full unplug cycle")
+                             : IEBLocalized(@"NO_UNAMBIGUOUS_ENERGY_ATTRIBUTION",
+                                            @"No unambiguous energy attribution")];
+    [cell configureName:[row[@"name"] length] ? row[@"name"]
+                                              : IEBLocalized(@"UNNAMED_PROCESS", @"Unnamed process")
              percentage:[percent isKindOfClass:NSNumber.class]
                             ? [NSString stringWithFormat:@"%.1f%%", [percent doubleValue]]
                             : nil

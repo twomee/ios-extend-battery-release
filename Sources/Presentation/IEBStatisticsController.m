@@ -16,9 +16,7 @@
 #import <math.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
-NSString *IEBText(NSString *english, NSString *hebrew) {
-    return [NSBundle.mainBundle.preferredLocalizations.firstObject hasPrefix:@"he"] ? hebrew : english;
-}
+
 static NSString *IEBDuration(id value) {
     if (![value isKindOfClass:NSNumber.class])
         return @"—";
@@ -155,10 +153,9 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     (void)tableView;
     (void)section;
-    return IEBText(@"Process activity and audio are separate, overlapping measurements. Audio may include "
-                   @"playback while the app is on screen. These durations must not be added.",
-                   @"פעילות תהליך ואודיו הם מדדים נפרדים וחופפים. אודיו עשוי לכלול נגינה כשהאפליקציה מוצגת. "
-                   @"אין לחבר את הזמנים.");
+    return IEBLocalized(@"PROCESS_ACTIVITY_AND_AUDIO_ARE_SEPARATE_OVERLAPPING_MEASUREMENTS_AUDIO_MAY_",
+                        @"Process activity and audio are separate, overlapping measurements. Audio may "
+                        @"include playback while the app is on screen. These durations must not be added.");
 }
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     (void)tableView;
@@ -167,11 +164,12 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)index {
     (void)tableView;
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
                                                    reuseIdentifier:nil];
     cell.textLabel.text = self.rows[(NSUInteger)index.row][0];
     cell.detailTextLabel.text = self.rows[(NSUInteger)index.row][1];
     cell.textLabel.numberOfLines = 0;
+    cell.detailTextLabel.numberOfLines = 0;
     return cell;
 }
 @end
@@ -253,7 +251,7 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
 - (NSString *)nameForIdentity:(NSString *)identity {
     return self.catalog[identity][@"name"]
                ?: ([identity hasPrefix:@"IEB.Unknown."]
-                       ? IEBText(@"Unidentified system source", @"מקור מערכת לא מזוהה")
+                       ? IEBLocalized(@"UNIDENTIFIED_SYSTEM_SOURCE", @"Unidentified system source")
                        : identity);
 }
 - (void)viewDidLoad {
@@ -426,43 +424,46 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
     section = [self logicalSection:section];
     if (section == 3) {
         NSDictionary *quality = IEBDataQuality(self.model);
-        NSString *state = [quality[@"state"] isEqual:@"recorded"]
-                              ? IEBText(@"Latest global activity recorded", @"הרישום הכללי הגיע לסוף הטווח")
-                              : IEBText(@"Partial statistics · totals may change",
-                                        @"נתונים חלקיים · הסכומים עשויים להשתנות");
-        NSString *activity =
-            [NSString stringWithFormat:IEBText(@"Activity recorded through %@ from range start · pending %@",
-                                               @"פעילות נרשמה עד %@ מתחילת הטווח · ממתינים %@"),
-                                       IEBDuration(quality[@"activity_recorded_seconds"]),
-                                       IEBDuration(quality[@"pending_seconds"])];
+        NSString *state =
+            [quality[@"state"] isEqual:@"recorded"]
+                ? IEBLocalized(@"LATEST_GLOBAL_ACTIVITY_RECORDED", @"Latest global activity recorded")
+                : IEBLocalized(@"PARTIAL_STATISTICS_TOTALS_MAY_CHANGE",
+                               @"Partial statistics · totals may change");
+        NSString *activity = [NSString
+            stringWithFormat:IEBLocalized(@"ACTIVITY_RECORDED_THROUGH_FROM_RANGE_START_PENDING",
+                                          @"Activity recorded through %@ from range start · pending %@"),
+                             IEBDuration(quality[@"activity_recorded_seconds"]),
+                             IEBDuration(quality[@"pending_seconds"])];
         NSString *energy = [quality[@"energy_state"] isEqual:@"recorded"]
-                               ? IEBText(@"Energy records span the range; app coverage is unverified.",
-                                         @"רשומות הצריכה משתרעות על הטווח; הכיסוי לכל אפליקציה אינו מובטח.")
+                               ? IEBLocalized(@"ENERGY_RECORDS_SPAN_THE_RANGE_APP_COVERAGE_IS_UNVERIFIED",
+                                              @"Energy records span the range; app coverage is unverified.")
                            : [quality[@"energy_state"] isEqual:@"partial"]
-                               ? IEBText(@"Energy records are partial or coverage is unknown.",
-                                         @"רשומות הצריכה חלקיות או שהכיסוי שלהן אינו ידוע.")
-                               : IEBText(@"Energy records unavailable.", @"רשומות הצריכה אינן זמינות.");
-        NSString *recovery = [quality[@"recovered_cycle"] boolValue]
-                                 ? IEBText(@"\nRecovered through last checkpoint. Later time is unknown; "
-                                           @"reconnect and unplug to start a new cycle.",
-                                           @"\nשוחזר עד נקודת השמירה האחרונה. הזמן שאחריה אינו ידוע; חבר "
-                                           @"ונתק מטען להתחלת מחזור חדש.")
-                                 : @"";
+                               ? IEBLocalized(@"ENERGY_RECORDS_ARE_PARTIAL_OR_COVERAGE_IS_UNKNOWN",
+                                              @"Energy records are partial or coverage is unknown.")
+                               : IEBLocalized(@"ENERGY_RECORDS_UNAVAILABLE", @"Energy records unavailable.");
+        NSString *recovery =
+            [quality[@"recovered_cycle"] boolValue]
+                ? IEBLocalized(@"RECOVERED_THROUGH_LAST_CHECKPOINT_LATER_TIME_IS_UNKNOWN_RECONNECT_AND_UNPLU",
+                               @"\nRecovered through last checkpoint. Later time is unknown; reconnect and "
+                               @"unplug to start a new cycle.")
+                : @"";
         NSString *levels =
             [quality[@"levels_available"] boolValue]
                 ? @""
-                : IEBText(@"\nBattery level records unavailable.", @"\nרישומי רמת הסוללה אינם זמינים.");
+                : IEBLocalized(@"BATTERY_LEVEL_RECORDS_UNAVAILABLE", @"\nBattery level records unavailable.");
         return [NSString stringWithFormat:@"%@\n%@\n%@%@%@\n\n%@", state, activity, energy, levels, recovery,
-                                          IEBText(@"Applications", @"אפליקציות")];
+                                          IEBLocalized(@"APPLICATIONS", @"Applications")];
     }
     if (self.nativeCharts && (section == 1 || section == 2))
         return nil;
     return @[
-        IEBText(@"Since Unplugged", @"מאז הניתוק"), IEBText(@"Battery Level", @"רמת סוללה"),
-        IEBText(@"Activity · tap a bar to select", @"פעילות · הקש על עמודה לבחירה"),
-        IEBText(@"Applications", @"אפליקציות"),
-        IEBText(@"Background and System Processes", @"תהליכי רקע ומערכת"),
-        IEBText(@"About These Statistics", @"על הנתונים"), IEBText(@"Process Diagnostics", @"אבחון תהליכים")
+        IEBLocalized(@"SINCE_UNPLUGGED", @"Since Unplugged"),
+        IEBLocalized(@"BATTERY_LEVEL", @"Battery Level"),
+        IEBLocalized(@"ACTIVITY_TAP_A_BAR_TO_SELECT", @"Activity · tap a bar to select"),
+        IEBLocalized(@"APPLICATIONS", @"Applications"),
+        IEBLocalized(@"BACKGROUND_AND_SYSTEM_PROCESSES", @"Background and System Processes"),
+        IEBLocalized(@"ABOUT_THESE_STATISTICS", @"About These Statistics"),
+        IEBLocalized(@"PROCESS_DIAGNOSTICS", @"Process Diagnostics")
     ][(NSUInteger)section];
 }
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
@@ -472,35 +473,34 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         double pending = [self.model[@"activity_pending_seconds"] doubleValue];
         return pending > 1
                    ? [NSString
-                         stringWithFormat:
-                             IEBText(@"Waiting for the system's last activity record (%@ of this range). "
-                                     @"Refreshes every 5 seconds.",
-                                     @"ממתין לרישום פעילות האפליקציות והרקע האחרונה (%@ מהטווח). מתרענן כל 5 "
-                                     @"שניות."),
-                             IEBDuration(@(pending))]
-                   : IEBText(@"Refreshes every 5 seconds. System energy accounting can arrive later.",
-                             @"מתרענן כל 5 שניות. נתוני צריכה מהמערכת עשויים להגיע מאוחר יותר.");
+                         stringWithFormat:IEBLocalized(@"WAITING_FOR_THE_SYSTEM_S_LAST_ACTIVITY_RECORD_OF_"
+                                                       @"THIS_RANGE_REFRESHES_EVERY",
+                                                       @"Waiting for the system's last activity record (%@ "
+                                                       @"of this range). Refreshes every 5 seconds."),
+                                          IEBDuration(@(pending))]
+                   : IEBLocalized(@"REFRESHES_EVERY_5_SECONDS_SYSTEM_ENERGY_ACCOUNTING_CAN_ARRIVE_LATER",
+                                  @"Refreshes every 5 seconds. System energy accounting can arrive later.");
     }
     if (self.nativeCharts && section == 1)
-        return IEBText(@"Original system charts · at most the last 24 hours of this cycle. Empty slots are "
-                       @"outside the cycle or unavailable. Summary totals cover the entire cycle.",
-                       @"גרפי המערכת המקוריים · עד 24 השעות האחרונות במחזור. משבצות ריקות הן מחוץ למחזור או "
-                       @"ללא נתון זמין. הסיכומים מכסים את המחזור המלא.");
+        return IEBLocalized(@"ORIGINAL_SYSTEM_CHARTS_AT_MOST_THE_LAST_24_HOURS_OF_THIS_CYCLE_EMPTY_SLOTS_",
+                            @"Original system charts · at most the last 24 hours of this cycle. Empty slots "
+                            @"are outside the cycle or unavailable. Summary totals cover the entire cycle.");
     if (self.nativeCharts && section == 2)
         return nil;
     if (section == 6)
-        return IEBText(
-            @"Live CPU counters are separate from background activity and recorded battery energy.",
-            @"מדדי CPU חיים נפרדים מפעילות ברקע ומנתוני צריכת הסוללה שנרשמו.");
+        return IEBLocalized(
+            @"LIVE_CPU_COUNTERS_ARE_SEPARATE_FROM_BACKGROUND_ACTIVITY_AND_RECORDED_BATTER",
+            @"Live CPU counters are separate from background activity and recorded battery energy.");
     if (section == 3)
-        return IEBText(@"Includes each application's background usage. Percentages use the same total as "
-                       @"system processes.",
-                       @"כולל שימוש ברקע של כל אפליקציה. האחוזים מחושבים מאותו סך צריכה כמו תהליכי המערכת.");
+        return IEBLocalized(@"INCLUDES_EACH_APPLICATION_S_BACKGROUND_USAGE_PERCENTAGES_USE_THE_SAME_TOTAL",
+                            @"Includes each application's background usage. Percentages use the same total "
+                            @"as system processes.");
     if (section == 4)
-        return IEBText(@"Internal or hidden system apps, services, extensions and unidentified sources.",
-                       @"יישומי מערכת פנימיים או מוסתרים, שירותים, תוספים ומקורות לא מזוהים.");
-    return section == 2 ? IEBText(@"Green: screen on · Blue: screen off usage · Grey: unavailable",
-                                  @"ירוק: מסך פעיל · כחול: שימוש כשהמסך כבוי · אפור: לא זמין")
+        return IEBLocalized(
+            @"INTERNAL_OR_HIDDEN_SYSTEM_APPS_SERVICES_EXTENSIONS_AND_UNIDENTIFIED_SOURCES",
+            @"Internal or hidden system apps, services, extensions and unidentified sources.");
+    return section == 2 ? IEBLocalized(@"GREEN_SCREEN_ON_BLUE_SCREEN_OFF_USAGE_GREY_UNAVAILABLE",
+                                       @"Green: screen on · Blue: screen off usage · Grey: unavailable")
                         : nil;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
@@ -566,24 +566,25 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     if (index.section == 6) {
         if (index.row == 2) {
-            cell.textLabel.text = IEBText(@"Saved cycles and comparison", @"מחזורים שמורים והשוואה");
-            cell.detailTextLabel.text = IEBText(@"Up to 20 closed cycles · select two to compare",
-                                                @"עד 20 מחזורים סגורים · בחר שניים להשוואה");
+            cell.textLabel.text =
+                IEBLocalized(@"SAVED_CYCLES_AND_COMPARISON", @"Saved cycles and comparison");
+            cell.detailTextLabel.text = IEBLocalized(@"UP_TO_20_CLOSED_CYCLES_SELECT_TWO_TO_COMPARE",
+                                                     @"Up to 20 closed cycles · select two to compare");
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             cell.selectionStyle = UITableViewCellSelectionStyleDefault;
             return cell;
         }
         if (index.row == 1) {
-            cell.textLabel.text = IEBText(@"Export Diagnostic Report", @"ייצוא דוח אבחון");
+            cell.textLabel.text = IEBLocalized(@"EXPORT_DIAGNOSTIC_REPORT", @"Export Diagnostic Report");
             cell.detailTextLabel.text =
-                IEBText(@"Readable TXT in the interface language and technical JSON · aggregate data only. "
-                        @"Choose where to share.",
-                        @"דוח TXT קריא בשפת הממשק ו־JSON טכני · נתונים כלליים בלבד. בחירת היעד בידיך.");
+                IEBLocalized(@"READABLE_TXT_IN_THE_INTERFACE_LANGUAGE_AND_TECHNICAL_JSON_AGGREGATE_DATA_ON",
+                             @"Readable TXT in the interface language and technical JSON · aggregate data "
+                             @"only. Choose where to share.");
             cell.selectionStyle = UITableViewCellSelectionStyleDefault;
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             return cell;
         }
-        cell.textLabel.text = IEBText(@"View live processes", @"הצג תהליכים פעילים");
+        cell.textLabel.text = IEBLocalized(@"VIEW_LIVE_PROCESSES", @"View live processes");
         cell.detailTextLabel.text = IEBProcessStatusText(self.processSnapshot);
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
@@ -591,26 +592,26 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
     }
     if (!self.model) {
         cell.textLabel.text = self.loadError
-                                  ? IEBText(@"Battery statistics could not be read. Pull to refresh.",
-                                            @"לא ניתן לקרוא את הנתונים. משוך לרענון.")
-                                  : IEBText(@"Loading…", @"טוען…");
+                                  ? IEBLocalized(@"BATTERY_STATISTICS_COULD_NOT_BE_READ_PULL_TO_REFRESH",
+                                                 @"Battery statistics could not be read. Pull to refresh.")
+                                  : IEBLocalized(@"LOADING", @"Loading…");
         return cell;
     }
     if ([self.model[@"state"] isEqual:@"waiting"]) {
         cell.textLabel.text =
-            IEBText(@"Waiting for an observed unplug cycle.", @"ממתין למחזור ניתוק שנמדד מתחילתו.");
+            IEBLocalized(@"WAITING_FOR_AN_OBSERVED_UNPLUG_CYCLE", @"Waiting for an observed unplug cycle.");
         return cell;
     }
     if (self.nativeCharts && index.section == 1) {
         if (!self.nativeChartReady) {
             cell.textLabel.text =
-                IEBText(@"Original chart data unavailable", @"הנתונים לגרף המקורי אינם זמינים");
+                IEBLocalized(@"ORIGINAL_CHART_DATA_UNAVAILABLE", @"Original chart data unavailable");
             return cell;
         }
         return [self.nativeCharts makeChartCell];
     }
     if (self.nativeCharts && index.section == 2) {
-        cell.textLabel.text = IEBText(@"Show Entire Cycle", @"הצג את כל המחזור");
+        cell.textLabel.text = IEBLocalized(@"SHOW_ENTIRE_CYCLE", @"Show Entire Cycle");
         cell.textLabel.textColor = UIColor.linkColor;
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
         return cell;
@@ -619,28 +620,30 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         if (index.row == 0) {
             NSDictionary *range = self.model[@"range"], *window = self.model[@"window"];
             cell.textLabel.text =
-                [self.model[@"state"] isEqual:@"incomplete"] ? IEBText(@"Incomplete capture", @"האיסוף חלקי")
-                : window[@"end"] ? IEBText(@"Last cycle · reconnected", @"המחזור האחרון · המטען חובר מחדש")
-                                 : IEBText(@"Current cycle · on battery", @"המחזור הנוכחי · ללא מטען");
+                [self.model[@"state"] isEqual:@"incomplete"]
+                    ? IEBLocalized(@"INCOMPLETE_CAPTURE", @"Incomplete capture")
+                : window[@"end"] ? IEBLocalized(@"LAST_CYCLE_RECONNECTED", @"Last cycle · reconnected")
+                                 : IEBLocalized(@"CURRENT_CYCLE_ON_BATTERY", @"Current cycle · on battery");
             NSString *duration = IEBDuration(@([range[@"end"] doubleValue] - [range[@"start"] doubleValue]));
             if (self.selectedStart > 0) {
                 cell.detailTextLabel.text = [NSString
-                    stringWithFormat:IEBText(@"Selected: from %@ to %@ after unplug\nRange duration: %@",
-                                             @"טווח נבחר: מ־%@ עד %@ לאחר הניתוק\nמשך הטווח: %@"),
+                    stringWithFormat:IEBLocalized(
+                                         @"SELECTED_FROM_TO_AFTER_UNPLUG_RANGE_DURATION",
+                                         @"Selected: from %@ to %@ after unplug\nRange duration: %@"),
                                      IEBDuration(
                                          @([range[@"start"] doubleValue] - [window[@"start"] doubleValue])),
                                      IEBDuration(
                                          @([range[@"end"] doubleValue] - [window[@"start"] doubleValue])),
                                      duration];
             } else {
-                cell.detailTextLabel.text =
-                    [NSString stringWithFormat:IEBText(@"Cycle duration: %@", @"משך המחזור: %@"), duration];
+                cell.detailTextLabel.text = [NSString
+                    stringWithFormat:IEBLocalized(@"CYCLE_DURATION", @"Cycle duration: %@"), duration];
             }
             if ([self.model[@"state"] isEqual:@"incomplete"])
                 cell.textLabel.textColor = UIColor.systemOrangeColor;
         } else {
-            cell.textLabel.text = index.row == 1 ? IEBText(@"Screen On", @"מסך פעיל")
-                                                 : IEBText(@"Screen Off Usage", @"שימוש כשהמסך כבוי");
+            cell.textLabel.text = index.row == 1 ? IEBLocalized(@"SCREEN_ON", @"Screen On")
+                                                 : IEBLocalized(@"SCREEN_OFF_USAGE", @"Screen Off Usage");
             cell.detailTextLabel.text =
                 IEBDuration(self.model[index.row == 1 ? @"screen_on" : @"screen_off"]);
         }
@@ -649,7 +652,7 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         NSDictionary *overview = self.overviewModel ?: self.model;
         NSArray *points = overview[activity ? @"activity_buckets" : @"levels"];
         if (!points.count) {
-            cell.textLabel.text = IEBText(@"Data unavailable", @"הנתונים אינם זמינים");
+            cell.textLabel.text = IEBLocalized(@"DATA_UNAVAILABLE", @"Data unavailable");
             return cell;
         }
         IEBChart *chart =
@@ -662,10 +665,10 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         chart.selectedStart = self.selectedStart;
         chart.selectedEnd = self.selectedEnd;
         chart.end = [overview[@"range"][@"end"] doubleValue];
-        chart.accessibilityLabel = activity
-                                       ? IEBText(@"Activity graph. Green: screen on. Blue: screen off usage.",
-                                                 @"גרף פעילות. ירוק: מסך פעיל. כחול: שימוש כשהמסך כבוי.")
-                                       : IEBText(@"Battery level graph", @"גרף רמת הסוללה");
+        chart.accessibilityLabel =
+            activity ? IEBLocalized(@"ACTIVITY_GRAPH_GREEN_SCREEN_ON_BLUE_SCREEN_OFF_USAGE",
+                                    @"Activity graph. Green: screen on. Blue: screen off usage.")
+                     : IEBLocalized(@"BATTERY_LEVEL_GRAPH", @"Battery level graph");
         __weak typeof(self) weak = self;
         chart.selection = ^(NSDictionary *bucket) {
             BOOL same = weak.selectedStart == [bucket[@"start"] doubleValue] &&
@@ -677,7 +680,7 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         };
         [cell.contentView addSubview:chart];
     } else if (index.section == 2) {
-        cell.textLabel.text = IEBText(@"Show Entire Cycle", @"הצג את כל המחזור");
+        cell.textLabel.text = IEBLocalized(@"SHOW_ENTIRE_CYCLE", @"Show Entire Cycle");
         cell.textLabel.textColor = UIColor.linkColor;
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     } else if (index.section == 3 || index.section == 4) {
@@ -688,27 +691,27 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         NSString *name = [self nameForIdentity:row[@"id"]];
         cell.textLabel.text =
             hasPercent ? [NSString stringWithFormat:@"%@   %@", name, Percent(row[@"percent"])] : name;
-        cell.detailTextLabel.text =
-            [NSString stringWithFormat:@"%@: %@ · %@: %@", IEBText(@"On screen", @"במסך"),
-                                       IEBDuration(row[@"foreground"]),
-                                       IEBText(@"Process background activity", @"פעילות תהליך ברקע"),
-                                       IEBDuration(row[@"background"])];
+        cell.detailTextLabel.text = [NSString
+            stringWithFormat:@"%@: %@ · %@: %@", IEBLocalized(@"ON_SCREEN", @"On screen"),
+                             IEBDuration(row[@"foreground"]),
+                             IEBLocalized(@"PROCESS_BACKGROUND_ACTIVITY", @"Process background activity"),
+                             IEBDuration(row[@"background"])];
         if (index.section == 4) {
             NSDictionary *cpu = self.processSources[row[@"id"]];
-            NSString *value =
-                cpu ? [NSString stringWithFormat:@"%.2f s", [cpu[@"cpu_seconds"] doubleValue]]
-                    : IEBText(@"Unavailable or no unique process match", @"לא זמין או שאין שיוך יחיד לתהליך");
+            NSString *value = cpu ? [NSString stringWithFormat:@"%.2f s", [cpu[@"cpu_seconds"] doubleValue]]
+                                  : IEBLocalized(@"UNAVAILABLE_OR_NO_UNIQUE_PROCESS_MATCH",
+                                                 @"Unavailable or no unique process match");
             cell.detailTextLabel.text = [cell.detailTextLabel.text
                 stringByAppendingFormat:@"\n%@: %@",
-                                        IEBText(@"CPU time · current process lifetime",
-                                                @"זמן CPU · מאז תחילת מופע התהליך"),
+                                        IEBLocalized(@"CPU_TIME_CURRENT_PROCESS_LIFETIME",
+                                                     @"CPU time · current process lifetime"),
                                         value];
         }
         if (!hasPercent)
             cell.detailTextLabel.text =
                 [NSString stringWithFormat:@"%@\n%@",
-                                           IEBText(@"No energy attribution in the selected range",
-                                                   @"אין שיוך צריכה בטווח שנבחר"),
+                                           IEBLocalized(@"NO_ENERGY_ATTRIBUTION_IN_THE_SELECTED_RANGE",
+                                                        @"No energy attribution in the selected range"),
                                            cell.detailTextLabel.text];
         [sourceCell configureName:name
                        percentage:hasPercent ? Percent(row[@"percent"]) : nil
@@ -718,31 +721,30 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
     } else {
         cell.textLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
         cell.textLabel.text =
-            IEBText(@"Energy uses the system's logged estimates. Boundary activity is allocated "
-                    @"proportionally. Source grouping may differ from Apple's app list. Delayed records can "
-                    @"update totals after reconnecting. — means unavailable, not zero.",
-                    @"הצריכה מבוססת על אומדני המערכת. פעילות שחוצה את גבולות המחזור מחולקת יחסית לזמן. קיבוץ "
-                    @"המקורות עשוי להיות שונה מרשימת האפליקציות של אפל. נתונים מאוחרים עשויים לעדכן את "
-                    @"הסכומים גם לאחר חיבור. הסימן — מציין נתון שאינו זמין, ולא אפס.");
+            IEBLocalized(@"ENERGY_USES_THE_SYSTEM_S_LOGGED_ESTIMATES_BOUNDARY_ACTIVITY_IS_ALLOCATED_PR",
+                         @"Energy uses the system's logged estimates. Boundary activity is allocated "
+                         @"proportionally. Source grouping may differ from Apple's app list. Delayed records "
+                         @"can update totals after reconnecting. — means unavailable, not zero.");
         NSMutableArray *messages = [NSMutableArray new];
         if (self.nativeTablePresentation && !self.nativeChartReady)
-            [messages addObject:IEBText(@"Chart data unavailable; stale values are cleared.",
-                                        @"נתוני הגרף אינם זמינים; הנתונים הישנים נוקו.")];
+            [messages addObject:IEBLocalized(@"CHART_DATA_UNAVAILABLE_STALE_VALUES_ARE_CLEARED",
+                                             @"Chart data unavailable; stale values are cleared.")];
         if (self.catalogUnavailable)
             [messages
-                addObject:IEBText(
+                addObject:IEBLocalized(
+                              @"INSTALLED_APPLICATIONS_COULD_NOT_BE_IDENTIFIED_SOURCES_ARE_LISTED_IN_THE_OT",
                               @"Installed applications could not be identified; sources are listed in the "
-                              @"other category.",
-                              @"לא ניתן לזהות אפליקציות מותקנות; המקורות מוצגים בקטגוריית התהליכים האחרים.")];
+                              @"other category.")];
         if (self.model[@"energy_error"] != NSNull.null)
-            [messages addObject:IEBText(@"Energy data unavailable.", @"נתוני צריכה אינם זמינים.")];
+            [messages addObject:IEBLocalized(@"ENERGY_DATA_UNAVAILABLE", @"Energy data unavailable.")];
         if (self.model[@"levels_error"] != NSNull.null)
-            [messages addObject:IEBText(@"Battery levels unavailable.", @"רמות הסוללה אינן זמינות.")];
+            [messages addObject:IEBLocalized(@"BATTERY_LEVELS_UNAVAILABLE", @"Battery levels unavailable.")];
         if ([self.model[@"energy_retention_incomplete"] boolValue])
             [messages
                 addObject:
-                    IEBText(@"Energy records cover only part of this range; accounting may still be delayed.",
-                            @"רשומות הצריכה מכסות רק חלק מהטווח; ייתכן שהרישום עדיין מתעדכן.")];
+                    IEBLocalized(
+                        @"ENERGY_RECORDS_COVER_ONLY_PART_OF_THIS_RANGE_ACCOUNTING_MAY_STILL_BE_DELAYE",
+                        @"Energy records cover only part of this range; accounting may still be delayed.")];
         cell.detailTextLabel.text = [messages componentsJoinedByString:@"\n"];
     }
     return cell;
@@ -792,22 +794,25 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
     NSDictionary *app = [self rowsForSection:index.section][(NSUInteger)index.row];
     NSMutableArray *rows = [NSMutableArray arrayWithArray:@[
         @[
-            IEBText(@"Relative Battery Usage", @"צריכת סוללה יחסית"),
+            IEBLocalized(@"RELATIVE_BATTERY_USAGE", @"Relative Battery Usage"),
             [app[@"percent"] isKindOfClass:NSNumber.class]
                 ? Percent(app[@"percent"])
-                : IEBText(@"No attribution in this range", @"אין שיוך בטווח שנבחר")
+                : IEBLocalized(@"NO_ATTRIBUTION_IN_THIS_RANGE", @"No attribution in this range")
         ],
-        @[ IEBText(@"On Screen", @"במסך"), IEBDuration(app[@"foreground"]) ],
-        @[ IEBText(@"Process background activity", @"פעילות תהליך ברקע"),
-           IEBDuration(app[@"background"]) ]
+        @[ IEBLocalized(@"ON_SCREEN_2", @"On Screen"), IEBDuration(app[@"foreground"]) ],
+        @[
+            IEBLocalized(@"PROCESS_BACKGROUND_ACTIVITY", @"Process background activity"),
+            IEBDuration(app[@"background"])
+        ]
     ]];
     NSArray *categories = @[
-        @[ IEBText(@"Now Playing", @"מדיה מתנגנת"), @"audio_now_playing" ],
+        @[ IEBLocalized(@"NOW_PLAYING", @"Now Playing"), @"audio_now_playing" ],
         @[
-            IEBText(@"Audio playback · separate measurement", @"השמעת אודיו · מדידה נפרדת"), @"audio_playback"
+            IEBLocalized(@"AUDIO_PLAYBACK_SEPARATE_MEASUREMENT", @"Audio playback · separate measurement"),
+            @"audio_playback"
         ],
-        @[ IEBText(@"Location", @"מיקום"), @"location" ],
-        @[ IEBText(@"Location and Audio", @"מיקום ואודיו"), @"location_audio" ]
+        @[ IEBLocalized(@"LOCATION", @"Location"), @"location" ],
+        @[ IEBLocalized(@"LOCATION_AND_AUDIO", @"Location and Audio"), @"location_audio" ]
     ];
     for (NSArray *category in categories)
         [rows addObject:@[ category[0], IEBDuration(app[category[1]] ?: NSNull.null) ]];
@@ -826,11 +831,11 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
         data && !error ? [[IEBDiagnosticExport alloc] initWithJSON:data readableText:text error:&error] : nil;
     if (!export || error) {
         UIAlertController *alert = [UIAlertController
-            alertControllerWithTitle:IEBText(@"Report unavailable", @"הדוח אינו זמין")
-                             message:IEBText(@"Could not prepare the diagnostic report. Try again.",
-                                             @"לא ניתן להכין את דוח האבחון. נסה שוב.")
+            alertControllerWithTitle:IEBLocalized(@"REPORT_UNAVAILABLE", @"Report unavailable")
+                             message:IEBLocalized(@"COULD_NOT_PREPARE_THE_DIAGNOSTIC_REPORT_TRY_AGAIN",
+                                                  @"Could not prepare the diagnostic report. Try again.")
                       preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:IEBText(@"OK", @"אישור")
+        [alert addAction:[UIAlertAction actionWithTitle:IEBLocalized(@"OK", @"OK")
                                                   style:UIAlertActionStyleDefault
                                                 handler:nil]];
         [self presentViewController:alert animated:YES completion:nil];
@@ -854,11 +859,12 @@ static double ChartValue(id value) { return [value isKindOfClass:NSNumber.class]
                     if (!owner.view.window || owner.presentedViewController)
                         return;
                     UIAlertController *alert = [UIAlertController
-                        alertControllerWithTitle:IEBText(@"Sharing failed", @"השיתוף לא הושלם")
-                                         message:IEBText(@"Export the report again and choose a destination.",
-                                                         @"ייצא את הדוח שוב ובחר יעד לשמירה או לשיתוף.")
+                        alertControllerWithTitle:IEBLocalized(@"SHARING_FAILED", @"Sharing failed")
+                                         message:IEBLocalized(
+                                                     @"EXPORT_THE_REPORT_AGAIN_AND_CHOOSE_A_DESTINATION",
+                                                     @"Export the report again and choose a destination.")
                                   preferredStyle:UIAlertControllerStyleAlert];
-                    [alert addAction:[UIAlertAction actionWithTitle:IEBText(@"OK", @"אישור")
+                    [alert addAction:[UIAlertAction actionWithTitle:IEBLocalized(@"OK", @"OK")
                                                               style:UIAlertActionStyleDefault
                                                             handler:nil]];
                     [owner presentViewController:alert animated:YES completion:nil];

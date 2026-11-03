@@ -1,4 +1,5 @@
 #import "../Sources/Diagnostics/IEBDiagnosticReport.h"
+#import "../Sources/Localization/IEBLocalization.h"
 #import <Foundation/Foundation.h>
 #define C(x)                                                                                                 \
     do {                                                                                                     \
@@ -47,7 +48,7 @@ int main(void) {
         C([r[@"quality"][@"state"] isEqual:@"unavailable"]);
         C(r[@"screen_on_seconds"] == NSNull.null && r[@"app_source_count"] == NSNull.null);
         NSString *automatic = IEBReadableDiagnosticReport(nil, nil);
-        NSString *chosen = NSBundle.mainBundle.preferredLocalizations.firstObject;
+        NSString *chosen = IEBCurrentLanguage();
         C([automatic isEqual:IEBReadableDiagnosticReportInLanguage(nil, nil, chosen)]);
         NSDictionary *model = @{
             @"state" : @"observed",
@@ -69,7 +70,7 @@ int main(void) {
             @"rows" : @[ @{@"name" : canary} ],
             @"permission_denied_count" : @0
         };
-        for (NSString *language in @[ @"en", @"he", @"HE-il", @"iw", @"fr" ]) {
+        for (NSString *language in @[ @"en", @"he", @"HE-il", @"iw", @"zz" ]) {
             BOOL he = [@[ @"he", @"HE-il", @"iw" ] containsObject:language];
             NSString *text = IEBReadableDiagnosticReportInLanguage(model, snapshot, language);
             C([text containsString:he ? @"דוח אבחון סוללה" : @"Battery diagnostic report"]);

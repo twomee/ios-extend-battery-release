@@ -1,0 +1,25 @@
+name: Translation correction
+description: Suggest clearer or more accurate wording in your language.
+title: "Translation: "
+body:
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Include the language code if you know it, for example fr or pt-BR.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current wording and location
+      description: Copy the text and describe which screen or report contains it.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested wording
+      description: Include a brief explanation if the meaning changes.
+    validations:
+      required: true
