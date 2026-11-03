@@ -2,8 +2,6 @@
 
 Battery statistics since unplugging, inside Settings → Battery.
 
-[עברית](README.he.md)
-
 ## Features
 
 - A **Since Unplugged** tab alongside the standard battery views.
