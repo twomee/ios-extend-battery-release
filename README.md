@@ -1,5 +1,7 @@
 # iOSExtendBattery
 
+<img src="assets/branding/iebattery-logo.png" alt="iOSExtendBattery logo" width="160">
+
 Battery statistics since unplugging, inside Settings → Battery.
 
 ## Features
